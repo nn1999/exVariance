@@ -1,0 +1,8 @@
+include: 'common.snakemake'
+
+import shutil
+
+root_dir=config.get('root_dir')
+data_dir=config.get('data_dir')
+output_dir=config.get('output_dir')
+

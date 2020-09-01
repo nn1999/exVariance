@@ -217,7 +217,6 @@ rule :
 
     threads:
         config.get('threads_mapping')
-
     conda:
         'envs/mcta.yaml'
     log:
