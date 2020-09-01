@@ -1,0 +1,18 @@
+# default config
+default_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_rrbs_msp1_apek1/config/default_config.yaml
+
+# file paths
+root_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software
+
+genome_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_rrbs_msp1_apek1/genome
+
+data_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_rrbs_msp1_apek1/data
+output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_rrbs_msp1_apek1/output
+temp_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_rrbs_msp1_apek1/tmp
+
+# general parameters
+threads_compress: 2
+threads_mapping: 6
+
+# whether the RRBS experiment is the MspI (C'CGG) and ApeKI (G'CWGC) double-enzyme RRBS experiment.
+Msp1_and_ApeK1_rrbs: true

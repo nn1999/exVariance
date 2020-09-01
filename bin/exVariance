@@ -1,0 +1,189 @@
+#! /lulab/lustre2/zhangshang/bin/anaconda3/bin/python
+# -*-coding:UTF-8-*-
+
+steps = (
+    'quality_control',
+    'cutadapt',
+    'quality_control_clean',
+    'mapping',
+    'bigwig',
+    'count_matrix',
+    'normalization',
+    'differential_expression',
+    'fusion_transcripts',
+    'SNP',
+    'RNA_editing',
+    'AS',
+    'APA',
+    'WGBS',
+    'RRBS',
+    'ctdna',
+    'wgbs_rrbs'
+)
+
+if __name__ == '__main__':
+
+    import logging
+    import argparse
+    import sys
+    import os
+    import yaml
+    import shutil
+
+    # set logging
+    logging.basicConfig(
+        level=logging.DEBUG, format='[%(asctime)s] [%(levelname)s] %(name)s: %(message)s')
+    logger = logging.getLogger('exVariance')
+
+    # set root dir
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    logger.info('exVariance\'s root directory: {}'.format(root_dir))
+
+    ##---------------------------------------------------------------------------------##
+
+    # set args
+    parser = argparse.ArgumentParser(description='exVariance is a tool for integrated analysis the liquid biopsy sequencing data.',
+                                     epilog='For additional help or support, please visit https://')
+    parser.add_argument('step', type=str, choices=steps)
+    parser.add_argument('--user_config_file', '-u', type=str, required=True,
+                        help='the user config file')
+    ## type: class 'argparse.Namespace' 将parser中设置的所有“add_argument”返回给args子类实例；parser中增加的属性内容都会在args实例中，使用即可。
+    args = parser.parse_args()
+
+    # set config
+    ## user config
+    user_config_file = args.user_config_file
+    if not os.path.isfile(user_config_file):
+        raise ValueError(
+            'cannot find configuration file: {} '.format(user_config_file))
+    else:
+        logger.info('read user config file: ' + user_config_file)
+        with open(user_config_file, 'r') as f:
+            user_config = yaml.load(f, Loader=yaml.FullLoader)
+    ## default config
+    default_config_file = user_config.get('default_config_file')
+    if not os.path.isfile(default_config_file):
+        raise ValueError(
+            'cannot find configuration file: {}'.format(default_config_file))
+    else:
+        logger.info('read default config file: {}'.format(default_config_file))
+        with open(default_config_file, 'r') as f:
+            config = yaml.load(f, Loader=yaml.FullLoader)
+    ## combine default_config and user_config
+    config.update(user_config)    # dictionary
+
+    # set snakemake using setp(in args) and config
+    ## set snakemake_path
+    snakemake_path = shutil.which('snakemake')
+    if snakemake_path is None:
+        raise ValueError('cannot find snakemake command')
+    ## set snakemake_args (choose steps)
+    if args.step == 'quality_control':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'quality_control_pe.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'quality_control_se.snakemake')
+    elif args.step == 'cutadapt':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'cutadapt_pe.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'cutadapt_se.snakemake')
+    elif args.step == 'quality_control_clean':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'quality_control_clean_pe.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'quality_control_clean_se.snakemake')
+    elif args.step == 'mapping':
+        if config['small_rna']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'mapping_small.snakemake')
+        else:
+            if config['paired_end']:
+                snakefile = os.path.join(
+                    root_dir, 'snakemake', 'mapping_long_pe.snakemake')
+            else:
+                snakefile = os.path.join(
+                    root_dir, 'snakemake', 'mapping_long_se.snakemake')
+    elif args.step == 'bigwig':
+        if config['small_rna']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'bigwig_small.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'bigwig_long.snakemake')
+    elif args.step == 'count_matrix':
+        if config['small_rna']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'count_matrix_small.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'count_matrix_long.snakemake')
+    elif args.step == 'normalization':
+        snakefile = os.path.join(
+            root_dir, 'snakemake', 'normalization.snakemake')
+    elif args.step == 'differential_expression':
+        snakefile = os.path.join(
+            root_dir, 'snakemake', 'differential_expression.snakemake')
+    elif args.step == 'fusion_transcripts':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'fusion_transcripts_pe.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'fusion_transcripts_se.snakemake')
+    elif args.step == 'SNP':
+        if config['paired_end']:
+            snakefile = os.path.join(root_dir, 'snakemake', 'SNP.snakemake')
+        else:
+            snakefile = os.path.join(root_dir, 'snakemake', 'SNP.snakemake')
+    elif args.step == 'RNA_editing':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'RNA_editing.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'RNA_editing.snakemake')
+    elif args.step == 'AS':
+        if config['paired_end']:
+            snakefile = os.path.join(root_dir, 'snakemake', 'AS.snakemake')
+        else:
+            snakefile = os.path.join(root_dir, 'snakemake', 'AS.snakemake')
+    elif args.step == 'APA':
+        if config['paired_end']:
+            snakefile = os.path.join(root_dir, 'snakemake', 'APA.snakemake')
+        else:
+            snakefile = os.path.join(root_dir, 'snakemake', 'APA.snakemake')
+    elif args.step == 'WGBS':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'WGBS_pe.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'WGBS_se.snakemake')
+    elif args.step == 'RRBS':
+        if config['Msp1_and_ApeK1_rrbs']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'RRBS_double_enzyme.snakemake')
+        else:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'RRBS_normal.snakemake')
+    elif args.step == 'ctdna':
+        snakefile = os.path.join(root_dir, 'snakemake', 'ctdna.snakemake')
+    elif args.step == 'wgbs_rrbs':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'WGBS_RRBS_pe.snakemake')
+    ## logging snakemake command
+    snakemake_args = ['-p', '-k', '--use-conda', '-j', '14', '--rerun-incomplete',
+                      '--latency-wait', '30', '--snakefile', snakefile, '--configfile', user_config_file]
+    logger.debug('snakemake command: ' + str(snakemake_path) +
+                 ' ' + str(snakemake_args))
+
+    # execute snakemake command: based on snakemake file (constructed by config and step) and user_config_file
+    os.execv(snakemake_path, snakemake_args)

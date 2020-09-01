@@ -1,0 +1,24 @@
+# This file is used to configure the behaviour of RNAeditor
+
+# Standard input files
+refGenome = /data/lulab/lustre2/zhangshang/ref/RNAEditor/Homo_sapiens.GRCh38.dna.primary_assembly.fa
+gtfFile = /data/lulab/lustre2/zhangshang/ref/RNAEditor/Homo_sapiens.GRCh38.83.gtf
+dbSNP = /data/lulab/lustre2/zhangshang/ref/RNAEditor/dbSNP.vcf
+hapmap = /data/lulab/lustre2/zhangshang/ref/RNAEditor/HAPMAP.vcf
+omni = /data/lulab/lustre2/zhangshang/ref/RNAEditor/1000GenomeProject.vcf
+esp =  /data/lulab/lustre2/zhangshang/ref/RNAEditor/ESP.vcf
+aluRegions = /data/lulab/lustre2/zhangshang/ref/RNAEditor/Repeats.bed
+output = /data/lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/output
+sourceDir = /usr/local/bin/
+maxDiff = 0.04
+seedDiff = 2
+standCall = 0
+standEmit = 0
+edgeDistance = 3
+intronDistance = 5
+minPts = 5
+eps = 50
+paired = True
+keepTemp = True
+overwrite = False
+threads = 12

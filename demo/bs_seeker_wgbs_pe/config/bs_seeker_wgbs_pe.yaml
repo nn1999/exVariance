@@ -1,0 +1,17 @@
+# default config
+default_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_wgbs_pe/config/default_config.yaml
+
+# file paths
+root_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software
+
+genome_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_wgbs_pe/genome
+
+data_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_wgbs_pe/data
+output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_wgbs_pe/output
+temp_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/bs_seeker_wgbs_pe/tmp
+
+# general parameters
+threads_compress: 2
+threads_mapping: 6
+
+paired_end: true

@@ -1,0 +1,327 @@
+include: 'common.snakemake'
+
+snp_dir = config.get('genome_dir') + '/../snp'
+
+rule all:
+    input:
+        expand("{output_dir}/SNP/10.VariantFiltration/{sample_id}.vcf.gz",output_dir=config.get('output_dir'),sample_id=sample_ids),
+        expand("{output_dir}/SNP/10.VariantFiltration/{sample_id}.vcf.gz.tbi",output_dir=config.get('output_dir'),sample_id=sample_ids)
+
+# rule all:
+#     input:
+#         expand("{output_dir}/SNP/6.SplitNCigarReads_addRG/{sample_id}.bam",output_dir=config.get('output_dir'),sample_id=sample_ids),
+#         expand("{output_dir}/SNP/6.SplitNCigarReads_addRG/{sample_id}.bai",output_dir=config.get('output_dir'),sample_id=sample_ids)
+
+
+rule STAR_mapping:
+    input:
+        fastq1 = '{output_dir}/cutadapt/{sample_id}_1.fastq.gz',
+        fastq2 = '{output_dir}/cutadapt/{sample_id}_2.fastq.gz'
+    output:
+        "{output_dir}/SNP/4.StarAlign/{sample_id}.Aligned.sortedByCoord.out.bam",
+        "{output_dir}/SNP/4.StarAlign/{sample_id}.Log.final.out",
+        "{output_dir}/SNP/4.StarAlign/{sample_id}.Log.out",
+        "{output_dir}/SNP/4.StarAlign/{sample_id}.Log.progress.out",
+        "{output_dir}/SNP/4.StarAlign/{sample_id}.SJ.out.tab"
+    params:
+        limitBAMsortRAM = 60000000000,
+        index=config.get("genome_dir") + '/long_index/star',
+        outFileNamePrefix = "{output_dir}/SNP/4.StarAlign/{sample_id}."
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/SNP.yaml"
+    log:
+        '{output_dir}/log/SNP/STAR_mapping/{sample_id}.log'
+    shell:
+        """STAR \
+            --genomeDir {params.index} \
+            --runThreadN {threads} \
+            --readFilesIn {input.fastq1} {input.fastq2} \
+            --readFilesCommand pigz -p {threads} -d -c \
+            --outSAMtype BAM SortedByCoordinate \
+            --twopassMode Basic \
+            --limitBAMsortRAM {params.limitBAMsortRAM} \
+            --outFileNamePrefix {params.outFileNamePrefix} \
+            > {log} 2>&1
+        """
+
+rule mark_duplicates_and_sort:
+    input:
+        input_bam= "{output_dir}/SNP/4.StarAlign/{sample_id}.Aligned.sortedByCoord.out.bam"
+    output:
+        "{output_dir}/SNP/5.MarkDuplicatesAndSort/{sample_id}.bam",
+        "{output_dir}/SNP/5.MarkDuplicatesAndSort/{sample_id}.metrics",
+        "{output_dir}/SNP/5.MarkDuplicatesAndSort/{sample_id}.bai"
+    threads:
+        config.get('threads_compress')
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/mark_duplicates_and_sort/{sample_id}.log"
+    shell:
+        """gatk MarkDuplicates \
+            --INPUT {input.input_bam} \
+            --OUTPUT {output[0]} \
+            --CREATE_INDEX true \
+            --METRICS_FILE {output[1]} \
+            --VALIDATION_STRINGENCY SILENT \
+            > {log} 2>&1
+        """
+
+## 由于 STAR 软件使用的 MAPQ 标准与 GATK 不同，而且比对时会有 reads 的片段落到内含子区间，需要进行一步 MAPQ 同步和 reads 剪切，
+## 使用 GATK 专为 RNA-seq 应用开发的工具 SplitNCigarReads 进行操作，
+## 它会将落在内含子区间的 reads 片段直接切除，并对 MAPQ 进行调整。
+## DNA 测序的重测序应用中也有序列比对软件的 MAPQ 与 GATK 无法直接对接的情况，需要进行调整。
+## 这一步看起来不需要太多资源，理论上可以在IBME上每个任务为其分配四个核试一下
+
+
+## 这一步在运行之前需要创建reference的dictionary file。方法是：picard CreateSequenceDictionary R= config.get("ctat_lib_dir")+'/ref_genome.fa' O= config.get("ctat_lib_dir")+'/ref_genome.dict'
+rule split_N_cigar_reads:
+    input:
+        input_bam = "{output_dir}/SNP/5.MarkDuplicatesAndSort/{sample_id}.bam"
+    output:
+        "{output_dir}/SNP/6.SplitNCigarReads/{sample_id}.bam",
+        "{output_dir}/SNP/6.SplitNCigarReads/{sample_id}.bai"
+    # threads:
+    #     config.get('threads_mapping')
+    params:
+        config.get("genome_dir") + '/fasta/genome.fa'
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/split_N_cigar_reads/{sample_id}.log"
+    shell:
+        """gatk SplitNCigarReads \
+            -R {params} \
+            -I {input.input_bam} \
+            -O {output[0]} \
+            > {log} 2>&1
+        """
+
+rule add_read_group:
+    input:
+        "{output_dir}/SNP/6.SplitNCigarReads/{sample_id}.bam",
+        "{output_dir}/SNP/6.SplitNCigarReads/{sample_id}.bai"
+    output:
+        "{output_dir}/SNP/6.SplitNCigarReads_addRG/{sample_id}.bam",
+        "{output_dir}/SNP/6.SplitNCigarReads_addRG/{sample_id}.bai"
+    params:
+        "{output_dir}/SNP/6.SplitNCigarReads/{sample_id}.bai"
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/add_read_group/{sample_id}.log"
+    shell:
+        """picard AddOrReplaceReadGroups \
+            I={input[0]} \
+            O={output[0]} \
+            RGID=4 \
+            RGLB=RNA \
+            RGPL=illumina \
+            RGPU=unit1 \
+            RGSM=20 \
+            > {log} 2>&1 ;
+        cp {params[0]}  {output[1]}
+        """
+
+
+
+
+
+## Base Recalibration的作用是为了重新校正碱基质量值（BQSR），
+## 其通过机器学习方法构建了测序碱基错误率模型，根据模型对测序的碱基进行相应的调整。
+# GATK建议做，但是如果你的测序数据质量较好，其实做这步的话效果并不大，
+# 这步可选提供对应物种已知的snp和indel变异文件，如果没有的话，更降低了这一步做的必要性
+
+
+rule base_recalibrator:
+    input:
+        input_bam = "{output_dir}/SNP/6.SplitNCigarReads_addRG/{sample_id}.bam"
+    output:
+        recalibration_report = "{output_dir}/SNP/7.BaseRecalibrator/{sample_id}_recalibration_report.table"
+    params:
+        config.get("genome_dir") + '/fasta/genome.fa'
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/base_recalibrator/{sample_id}.log"
+    shell:
+        """gatk --java-options "-XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -XX:+PrintFlagsFinal \
+            -XX:+PrintGCDetails \
+            -Xloggc:gc_log.log -Xms4000m" \
+            BaseRecalibrator \
+            -R {params} \
+            -I {input.input_bam} \
+            --use-original-qualities \
+            -O {output.recalibration_report} \
+            -known-sites {snp_dir}/dbSNP_chr.vcf \
+            > {log} 2>&1
+        """
+                    #  -known-sites {snp_dir}/1000GENOMES-phase_3.vcf.gz
+
+
+## 可选的 BQSR，
+## 这一步操作主要是针对测序质量不太好的数据，进行碱基质量再校准，
+## 如果对自己的测序数据质量足够自信可以省略，2500 之后 Hiseq 仪器的数据质量都挺不错的，可以根据 FastQC 结果来决定。
+rule apply_BQSR:
+    input:
+        input_bam = "{output_dir}/SNP/6.SplitNCigarReads_addRG/{sample_id}.bam",
+        recalibration_report = "{output_dir}/SNP/7.BaseRecalibrator/{sample_id}_recalibration_report.table"
+    output:
+        output_bam = "{output_dir}/SNP/8.ApplyBQSR/{sample_id}.bam",
+        output_bam_index = "{output_dir}/SNP/8.ApplyBQSR/{sample_id}.bai"
+    params:
+        config.get("genome_dir") + '/fasta/genome.fa'
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/apply_BQSR/{sample_id}.log"
+    shell:
+        """gatk --java-options "-XX:+PrintFlagsFinal \
+            -Xloggc:gc_log.log \
+            -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10 -Xms3000m" \
+            ApplyBQSR \
+            --add-output-sam-program-record \
+            -R {params} \
+            -I {input.input_bam} \
+            --use-original-qualities \
+            -O {output.output_bam} \
+            --bqsr-recal-file {input.recalibration_report} \
+            > {log} 2>&1
+        """
+
+## 变异检测
+## 忽略参数    -L ${interval_list} \
+rule haplotype_caller:
+    input:
+        input_bam = "{output_dir}/SNP/8.ApplyBQSR/{sample_id}.bam",
+        input_bam_index = "{output_dir}/SNP/8.ApplyBQSR/{sample_id}.bai"
+    output:
+        output_vcf = "{output_dir}/SNP/9.HaplotypeCaller/{sample_id}.vcf.gz",
+	    output_vcf_tbi = "{output_dir}/SNP/9.HaplotypeCaller/{sample_id}.vcf.gz.tbi"
+    params:
+        config.get("genome_dir") + '/fasta/genome.fa'
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/haplotype_caller/{sample_id}.log"
+    shell:
+        """gatk --java-options "-Xms6000m -XX:GCTimeLimit=50 -XX:GCHeapFreeLimit=10" \
+            HaplotypeCaller \
+            -R {params} \
+            -I {input.input_bam} \
+            -O {output.output_vcf} \
+            -dont-use-soft-clipped-bases \
+            --standard-min-confidence-threshold-for-calling 20 \
+            --dbsnp {snp_dir}/dbSNP_chr.vcf \
+            > {log} 2>&1
+        """
+
+# call 完变异之后的变异过滤
+
+rule variant_filtration:
+    input:
+        input_vcf = "{output_dir}/SNP/9.HaplotypeCaller/{sample_id}.vcf.gz"
+    output:
+        output_vcf = "{output_dir}/SNP/10.VariantFiltration/{sample_id}.vcf.gz",
+	    output_vcf_tbi = "{output_dir}/SNP/10.VariantFiltration/{sample_id}.vcf.gz.tbi"
+    params:
+        config.get("genome_dir") + '/fasta/genome.fa'
+    conda:
+        "envs/SNP.yaml"
+    log:
+        "{output_dir}/log/SNP/variant_filtration/{sample_id}.log"
+    shell:
+        """gatk VariantFiltration \
+			--R {params} \
+			--V {input.input_vcf} \
+			--window 35 \
+			--cluster 3 \
+			--filter-name "FS" \
+			--filter "FS > 30.0" \
+			--filter-name "QD" \
+			--filter "QD < 2.0" \
+			-O {output.output_vcf} \
+            > {log} 2>&1
+        """
+
+
+
+
+
+
+
+
+
+# ## 待处理
+# ## 后续步骤，待理解
+
+# rule MergeVCFs:
+#     input:
+#         input_vcf = "{exp_dir}/10.VariantFiltration/{sample_id}.vcf.gz"
+# 		input_vcf_index = "{exp_dir}/10.VariantFiltration/{sample_id}.vcf.gz.tbi"
+#     output:
+#         output_vcf = "{exp_dir}/11.MergeVCFs/{sample_id}.vcf.gz"
+# 		output_vcf_index = "{exp_dir}/11.MergeVCFs/{sample_id}.vcf.gz.tbi"
+#     shell:
+#         """
+#         gatk --java-options "-Xms2000m"  \
+#             MergeVcfs \
+#             --INPUT ${sep=' --INPUT=' input_vcfs} \
+#             --OUTPUT ${output.output_vcf}
+#         """
+
+# ## 后续步骤，待理解
+
+# rule ScatterIntervalList:
+#     input:
+#         scatter_count=
+#     output:
+
+#     params:
+#         output_dir = "{exp_dir}/12.ScatterIntervalList"
+#     shell:
+#         """
+#         set -e
+#         mkdir out
+#         gatk --java-options "-Xms1g" \
+#             IntervalListTools \
+#             --SCATTER_COUNT={input.scatter_count} \
+#             --SUBDIVISION_MODE=BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW \
+#             --UNIQUE=true \
+#             --SORT=true \
+#             --INPUT={input.interval_list} \
+#             --OUTPUT={output.output_dir}
+	
+#         """
+#     run:
+#         import glob, os
+#         # Works around a JES limitation where multiples files with the same name overwrite each other when globbed
+#         intervals = sorted(glob.glob("out/*/*.interval_list"))
+#         for i, interval in enumerate(intervals):
+#           (directory, filename) = os.path.split(interval)
+#           newName = os.path.join(directory, str(i + 1) + filename)
+#           os.rename(interval, newName)
+#         print(len(intervals))
+#         f = open("interval_count.txt", "w+")
+#         f.write(str(len(intervals)))
+#         f.close()
+
+# ## 后续步骤，待理解
+
+# rule RevertSam:
+#     input:
+
+#     output:
+
+#     shell:
+#         """
+#         gatk RevertSam \
+#         	--INPUT ${input_bam} \
+#         	--OUTPUT ${base_name}.bam \
+#             --VALIDATION_STRINGENCY SILENT \
+#         	--ATTRIBUTE_TO_CLEAR FT \
+#         	--ATTRIBUTE_TO_CLEAR CO \
+#         	--SORT_ORDER ${sort_order}
+#         """

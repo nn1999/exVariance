@@ -1,0 +1,260 @@
+include: 'common.snakemake'
+
+map_steps = ['genome', 'rRNA', 'circRNA']
+if config.get('remove_duplicates_long'):
+    map_steps += ['genome_rmdup', 'rRNA_rmdup', 'circRNA_rmdup']
+
+output_dir=config.get('output_dir')
+count_method=config.get('count_method')
+remove_duplicates_long=config.get('remove_duplicates_long')
+bin_dir=config.get('bin_dir')
+
+count_method_regex = '(featurecounts)|(htseq)'
+rule all:
+    input:
+        count_matrix=expand('{output_dir}/count_matrix/{count_method}.txt',
+            output_dir=output_dir, count_method=count_method),
+        summarize_read_counts=expand('{output_dir}/summary/read_counts.txt',
+            output_dir=output_dir, sample_id=sample_ids),
+        # summarize_read_counts_jupyter=expand('{output_dir}/summary/read_counts.html',
+        #     output_dir=output_dir)
+
+rule featurecounts:
+    input:
+        bam='{output_dir}/bam/{sample_id}/{map_step}.bam',
+        gtf=config.get('genome_dir') + '/gtf/long_RNA.gtf'
+    output:
+        counts='{output_dir}/counts/featurecounts/{sample_id}/{map_step}',
+        summary='{output_dir}/counts/featurecounts/{sample_id}/{map_step}.summary'
+    params:
+        strandness={'no': 0, 'forward': 1, 'reverse': 2}.get(config.get('strandness'), 0),
+        paired_end={True: '-p', False: ''}[config.get('paired_end')],
+        min_mapping_quality=config.get('min_mapping_quality'),
+        count_multimap_reads='-M' if config.get('count_multimap_reads') else '',
+        count_overlapping_features='-O' if config.get('count_overlapping_features') else ''
+    wildcard_constraints:
+        map_step='(?!circRNA).*'
+    conda:
+        "envs/count_matrix.yaml"
+    log:
+        '{output_dir}/log/count_matrix/featurecounts/{sample_id}_{map_step}.log'
+    shell:
+        '''featureCounts {params.count_overlapping_features} -t exon -g gene_id {params.count_multimap_reads} \
+            -s {params.strandness} -Q {params.min_mapping_quality} \
+            {params.paired_end} -a {input.gtf} -o {output.counts} {input.bam} > {log} 2>&1
+        '''
+
+rule htseq:
+    input:
+        bam='{output_dir}/bam/{sample_id}/{map_step}.bam',
+        gtf=config.get('genome_dir') + '/gtf/long_RNA.gtf'
+    output:
+        counts='{output_dir}/counts/htseq/{sample_id}/{map_step}'
+    params:
+        strandness={'forward': 'yes', 'reverse': 'reverse'}.get(config.get('strandness'), 'no'),
+        min_mapping_quality=config.get('min_mapping_quality'),
+        count_overlapping_features='all' if config.get('count_overlapping_features') else 'none'
+    wildcard_constraints:
+        map_step='(?!circRNA).*'
+    conda:
+        "envs/count_matrix.yaml"
+    log:
+        '{output_dir}/log/count_matrix/htseq/{sample_id}_{map_step}.log'
+    shell:
+        '''htseq-count -t exon -i gene_id -f bam -a {params.min_mapping_quality} \
+            --nonunique {params.count_overlapping_features} -s {params.strandness} \
+            {input.bam} {input.gtf} > {output.counts} 2> {log}
+        '''
+
+rule count_circRNA:
+    input:
+        '{output_dir}/bam/{sample_id}/{map_step}.bam'
+    output:
+        '{output_dir}/counts/count_circrna/{sample_id}/{map_step}'
+    params:
+        paired_end={True: '-p', False: ''}[config.get('paired_end')],
+        strandness=config.get('strandness'),
+        min_mapping_quality=config.get('min_mapping_quality')
+    wildcard_constraints:
+        map_step='circRNA.*'
+    conda:
+        "envs/count_matrix.yaml"
+    log:
+        '{output_dir}/log/count_matrix/count_circRNA/{sample_id}_{map_step}.log'
+    shell:
+        '''count_reads_zs_app.py count_circrna -s {params.strandness} \
+            -q {params.min_mapping_quality} {params.paired_end} \
+            -i {input} -o {output} > {log} 2>&1
+        '''
+
+class get_rmdup_counts:
+    def __init__(self, template, rmdup=False):
+        if rmdup:
+            self.template = template + '_rmdup'
+        else:
+            self.template = template
+
+    def __call__(self, wildcards):
+        return expand(self.template, sample_id=sample_ids, **wildcards)
+
+rule count_matrix_circrna:
+    input:
+        circrna_counts=get_rmdup_counts('{output_dir}/counts/count_circrna/{sample_id}/circRNA', rmdup=remove_duplicates_long),
+        circrna_sizes=config.get('genome_dir') + '/chrom_sizes/circRNA'
+    output:
+        '{output_dir}/count_matrix/circRNA.txt'
+    run:
+        import pandas as pd
+
+        # read circRNA counts from individual files
+        matrix_circrna = {}
+        for filename in input.circrna_counts:
+            sample_id = filename.split('/')[-2]
+            matrix_circrna[sample_id] = pd.read_table(filename, sep='\t', header=None, index_col=0).iloc[:, 0]
+        matrix_circrna = pd.DataFrame(matrix_circrna)
+        matrix_circrna = matrix_circrna.loc[:, sample_ids]
+        matrix_circrna.fillna(0, inplace=True)
+        matrix_circrna = matrix_circrna.astype('int')
+        matrix_circrna = matrix_circrna.loc[matrix_circrna.sum(axis=1) > 0].copy()
+        # annotate circRNA 
+        circrna_sizes = pd.read_table(input.circrna_sizes, sep='\t', header=None, index_col=0).iloc[:, 0]
+        circrna_ids = matrix_circrna.index.values
+        matrix_circrna.index = circrna_ids + '|circRNA|' + circrna_ids + '|' + circrna_ids\
+             + '|' + circrna_ids + '|0|' + circrna_sizes.loc[circrna_ids].values.astype('str')
+        matrix_circrna.index.name = 'feature'
+        matrix_circrna.to_csv(output[0], sep='\t', header=True, index=True, na_rep='NA')
+
+rule count_matrix:
+    input:
+        counts=get_rmdup_counts('{output_dir}/counts/{count_method}/{sample_id}/genome', rmdup=config.get('remove_duplicates_long')),
+        matrix_circrna='{output_dir}/count_matrix/circRNA.txt',
+        transcript_table=config.get('genome_dir') + '/transcript_table/all.txt',
+        gene_length=config.get('genome_dir') + '/gene_length/long_RNA'
+    output:
+        '{output_dir}/count_matrix/{count_method}.txt'
+    wildcard_constraints:
+        count_method='(?!circRNA).*'
+    run:
+        import pandas as pd
+        import re
+
+        # annotate features
+        transcript_table = pd.read_table(input.transcript_table, sep='\t', dtype='str')
+        transcript_table = transcript_table.drop_duplicates('gene_id', keep='first')
+        transcript_table.set_index('gene_id', inplace=True, drop=False)
+        # read gene counts from individual files
+        matrix = {}
+        sample_ids = []
+        for filename in input.counts:
+            sample_id = filename.split('/')[-2]
+            sample_ids.append(sample_id)
+            if wildcards.count_method == 'featurecounts':
+                matrix[sample_id] = pd.read_table(filename, comment='#', sep='\t', index_col=0)
+                matrix[sample_id] = matrix[sample_id].iloc[:, -1]
+            elif wildcards.count_method == 'htseq':
+                matrix[sample_id] = pd.read_table(filename, comment='__', sep='\t', header=None, index_col=0).iloc[:, 0]
+        matrix = pd.DataFrame(matrix)
+        matrix = matrix.loc[:, sample_ids]
+        # remove all-zero features
+        matrix = matrix.loc[matrix.sum(axis=1) > 0].copy()
+        gene_ids = matrix.index.values
+        
+        
+        # remove features not in transcript table
+        gene_ids = gene_ids[~(transcript_table.loc[gene_ids, 'gene_id'].isna().values)]
+        matrix = matrix.loc[gene_ids]
+        # read gene lengths
+        gene_lengths = pd.read_table(input.gene_length, sep='\t', index_col=0, dtype='str').loc[:, 'merged']
+        # remove features not in gene length
+        gene_ids = gene_ids[~(gene_lengths.loc[gene_ids].isna().values)]
+        matrix = matrix.loc[gene_ids]
+        # annotate features
+        feature_names = transcript_table.loc[gene_ids, 'gene_id'].values \
+            + '|' + transcript_table.loc[gene_ids, 'gene_type'].values \
+            + '|' + transcript_table.loc[gene_ids, 'gene_name'].values \
+            + '|' + transcript_table.loc[gene_ids, 'gene_id'].values \
+            + '|' + transcript_table.loc[gene_ids, 'gene_id'].values \
+            + '|0|' + gene_lengths.loc[gene_ids].values
+        
+        matrix.index = feature_names
+        # merge gene matrix and circRNA matrix
+        matrix_circrna = pd.read_table(input.matrix_circrna, sep='\t', index_col=0)
+        matrix = pd.concat([matrix, matrix_circrna], axis=0)
+        matrix.index.name = 'feature'
+        
+        matrix.to_csv(output[0], sep='\t', header=True, index=True, na_rep='NA')
+
+rule count_matrix_mRNA:
+    input:
+        '{output_dir}/count_matrix/{count_method}.txt'
+    output:
+        '{output_dir}/count_matrix/{count_method}_mrna.txt'
+    wildcard_constraints:
+        count_method=count_method_regex
+    conda:
+        "envs/count_matrix.yaml"
+    log:
+        '{output_dir}/log/count_matrix/count_matrix_mRNA/{count_method}.log'
+    shell:
+        '''awk 'NR==1{{print}}NR>1{{split($0,a,"|");if(a[2] == "mRNA") print}}' {input} > {output} 2> {log}
+        '''
+
+rule count_matrix_lncRNA:
+    input:
+        '{output_dir}/count_matrix/{count_method}.txt'
+    output:
+        '{output_dir}/count_matrix/{count_method}_lncrna.txt'
+    wildcard_constraints:
+        count_method=count_method_regex
+    conda:
+        "envs/count_matrix.yaml"
+    log:
+        '{output_dir}/log/count_matrix/count_matrix_lncRNA/{count_method}.log'
+    shell:
+        '''awk 'NR==1{{print}}NR>1{{split($0,a,"|");if(a[2] == "lncRNA") print}}' {input} > {output} 2> {log}
+        '''
+
+rule summarize_fragment_counts:
+    input:
+        fragment_counts=lambda wildcards: expand('{output_dir}/stats/fragment_counts/{sample_id}/{map_step}',
+            output_dir=wildcards.output_dir, sample_id=sample_ids, map_step=map_steps),
+        count_matrix='{output_dir}/count_matrix/featurecounts.txt'
+    output:
+        '{output_dir}/summary/read_counts.txt'
+    wildcard_constraints:
+        count_method=count_method_regex
+    run:
+        import pandas as pd
+        # read fragment counts for each mapping step
+        fragment_counts = pd.DataFrame(index=map_steps, columns=sample_ids)
+        for filename in input.fragment_counts:
+            c = filename.split('/')
+            sample_id = c[-2]
+            map_step = c[-1]
+            with open(filename, 'r') as f:
+                fragment_counts.loc[map_step, sample_id] = int(f.read().strip())
+        fragment_counts = fragment_counts.astype('int')
+        fragment_counts.columns.name = 'sample_id'
+        fragment_counts.drop(index='circRNA', inplace=True)
+
+        # read count matrix
+        count_matrix = pd.read_table(input.count_matrix, sep='\t', index_col=0)
+        feature_info = count_matrix.index.to_series().str.split('|', expand=True)
+        feature_info.columns = ['gene_id', 'gene_type', 'gene_name', 'domain_id', 'transcript_id', 'start', 'end']
+        count_matrix = pd.concat([feature_info, count_matrix], axis=1)
+        counts_by_rnatype = count_matrix.groupby('gene_type')[sample_ids].sum()
+        counts_by_rnatype = counts_by_rnatype.loc[:, sample_ids]
+
+        matrix = pd.concat([fragment_counts, counts_by_rnatype], axis=0)
+        matrix.index.name = 'rna_type'
+        matrix.to_csv(output[0], sep='\t', header=True, index=True, na_rep='NA')
+
+# rule summarize_fragment_counts_jupyter:
+#     input:
+#         summary='{output_dir}/summary/read_counts.txt',
+#         jupyter=root_dir + '/templates/summarize_read_counts_long.ipynb'
+#     output:
+#         jupyter='{output_dir}/summary/read_counts.ipynb',
+#         html='{output_dir}/summary/read_counts.html'
+#     run:
+#         shell(nbconvert_command)

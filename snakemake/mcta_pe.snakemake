@@ -1,0 +1,228 @@
+include: 'common.snakemake'
+
+import shutil
+
+root_dir=config.get('root_dir')
+data_dir=config.get('data_dir')
+output_dir=config.get('output_dir')
+
+rule gzip_fastq:
+    input:
+        expand('{data_dir}/fastq/{sample_id}_{mate_index}.fastq',data_dir=data_dir, sample_id=sample_ids, mate_index=[1, 2])
+    output:
+        fastq_gz='{data_dir}/fastq/{sample_id}_{mate_index}.fastq.gz'
+    params:
+    
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log//.log'
+    shell:
+        '''
+            pigz -p {threads} {input}
+        ''' 
+
+
+rule trim_fastq:
+    input:
+        expand(fastq_gz='{data_dir}/fastq/{sample_id}_{mate_index}.fastq.gz',data_dir=data_dir, sample_id=sample_ids, mate_index=[1, 2])
+    output:
+        trim1_fastq_1='{output_dir}/trim1/{sample_id}/{sample_id}.1.clean.fq.gz',
+        trim1_fastq_2='{output_dir}/trim1/{sample_id}/{sample_id}.2.clean.fq.gz'
+    params:
+        trim_fastq_pl='{root_dir}/bin/dna_meth/MCTA/trim_fastq.pl',
+        indir='{data_dir}/fastq/',
+        outdir='{output_dir}/trim1',
+        sample_name='{sample_id}'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log/trim/{sample_id}.log'
+    shell:
+        '''
+            perl {params.trim_fastq_pl} --indir {params.indir} --outdir {params.outdir} --sample {params.sample_name} > {log} 2>&1
+        '''
+
+rule filter_fastq:
+    input:
+        trim1_fastq_1='{output_dir}/trim1/{sample_id}/{sample_id}.1.clean.fq.gz',
+        trim1_fastq_2='{output_dir}/trim1/{sample_id}/{sample_id}.2.clean.fq.gz'
+    output:
+        filter1_fastq_1='{output_dir}/trim1/{sample_id}/{sample_id}.1.filter.fq.gz',
+        filter1_fastq_2='{output_dir}/trim1/{sample_id}/{sample_id}.2.filter.fq.gz'
+    params:
+        filter_fastq_pl='{root_dir}/bin/dna_meth/MCTA/remove_forward6bp.pl',
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        fastq1_log='{output_dir}/log/filter/{sample_id}_1.log',
+        fastq2_log='{output_dir}/log/filter/{sample_id}_2.log'
+    shell:
+        '''
+            perl {params.filter_fastq_pl} {input.trim1_fastq_1} {output.filter1_fastq_1} 12 20 6 > {log.fastq1_log} 2>&1; \
+            perl {params.filter_fastq_pl} {input.trim1_fastq_2} {output.filter1_fastq_2} 6 20 12 > {log.fastq2_log} 2>&1
+        '''
+
+rule bismark_mapping:
+    input:
+        filter1_fastq_1='{output_dir}/trim1/{sample_id}/{sample_id}.1.filter.fq.gz',
+        filter1_fastq_2='{output_dir}/trim1/{sample_id}/{sample_id}.2.filter.fq.gz'
+    output:
+        bam_file1='{output_dir}/bismark_bam/{sample_id}_1/{sample_id}.1.filter_bismark.bam',
+        bam_file2='{output_dir}/bismark_bam/{sample_id}_2/{sample_id}.2.filter_bismark.bam'
+    params:
+        genome=config.get('genome_dir'),
+        bowtie1_bin_dir=config.get('bowtie_bin_dir'),
+        tmp_dir=config.get('temp_dir'),
+        bam1_dir='{output_dir}/bismark_bam/{sample_id}_1',
+        bam2_dir='{output_dir}/bismark_bam/{sample_id}_2',
+        bam_file='{output_dir}/bismark_bam/{sample_id}_trim_1_bismark_bt2_pe.bam'
+    threads:
+        8    ## using more than 4 cores per alignment thread has been reported to have diminishing returns. If possible try to limit -p to a value of 4
+    conda:
+        "envs/mcta.yaml"
+    log:
+        fastq1_log='{output_dir}/log/bismark_bam/{sample_id}_1.log',
+        fastq2_log='{output_dir}/log/bismark_bam/{sample_id}_2.log'
+    shell:
+        '''
+            bismark --bowtie1 --non_directional --fastq --phred33-quals --temp_dir {params.tmp_dir} \
+                    --path_to_bowtie {params.bowtie1_bin_dir} --output_dir {params.bam1_dir} {params.genome} \
+                    {input.filter_fastq_1} > {log.fastq1_log} 2>&1 ; \
+            bismark --bowtie1 --non_directional --fastq --phred33-quals --temp_dir {params.tmp_dir} \
+                    --path_to_bowtie {params.bowtie1_bin_dir} --output_dir {params.bam2_dir} {params.genome} \
+                    {input.filter_fastq_2} > {log.fastq2_log} 2>&1 ;
+
+        '''
+
+rule bam_sorted:
+    input:
+        bam_file1='{output_dir}/bismark_bam/{sample_id}_1/{sample_id}.1.filter_bismark.bam',
+        bam_file2='{output_dir}/bismark_bam/{sample_id}_2/{sample_id}.2.filter_bismark.bam'
+    output:
+        sorted1='{output_dir}/sorted_bam/{sample_id}.1.sorted.bam',
+        sorted2='{output_dir}/sorted_bam/{sample_id}.2.sorted.bam'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        log1='{output_dir}/log/bam_sorted/{sample_id}_1.log',
+        log2='{output_dir}/log/bam_sorted/{sample_id}_2.log'
+    shell:
+        '''
+            samtools sort -@ {threads} {input.bam_file1} -o {output.sorted1} > {log.log1} 2>&1; \
+            samtools sort -@ {threads} {input.bam_file2} -o {output.sorted2} > {log.log2} 2>&1 ; \
+            samtools index {output.sorted1} ; \
+            samtools index {output.sorted2}
+        '''
+
+rule bismark_methylation_extract:
+    input:
+        sorted1='{output_dir}/sorted_bam/{sample_id}.1.sorted.bam',
+        sorted2='{output_dir}/sorted_bam/{sample_id}.2.sorted.bam'
+    output:
+        coverage_dir='{output_dir}/bismark_methylation_extract'
+    params:
+        
+    wildcard_constraints:
+
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log//.log'
+    shell:
+        '''
+            bismark_methylation_extractor -s {input.sorted1} {input.sorted2} --bedGraph --counts -o {this_sample_out} > {this_log_dir} 2>&1
+        '''
+
+rule merge_cpg_pos:
+    input:
+        coverage_dir='{output_dir}/bismark_methylation_extract'
+    output:
+
+    params:
+        genome=config.get('genome_dir')
+    wildcard_constraints:
+
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log//.log'
+    shell:
+        '''
+            python3 merge_cpg_pos.py -i {input.coverage_dir} -p {threads} -f {params.genome}/CpGs/hg38_cpgs.txt.gz
+        '''
+
+rule merge_two_coverage:
+    input:
+        coverage_dir='{output_dir}/bismark_methylation_extract'
+    output:
+        merge_two_coverage_script=config.get('root_dir') + '/bin/dna_meth/MCTA/merge_two_coverage.py'
+        merged_dir='{output_dir}/merge_two_coverage/{sample_id}'
+    params:
+
+    wildcard_constraints:
+
+    threads:
+        config.get('threads_mapping')
+
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log//.log'
+    shell:
+        '''
+            python {params.merge_two_coverage_script} -i [merged CpG coverage dir] -o {output.merged_dir}
+        '''
+
+rule get_wiggle_file:
+    input:
+
+    output:
+
+    params:
+        coverage_script=config.get('root_dir') + '/bin/dna_meth/WGBS_RRBS/coverage_to_wig.py'
+    wildcard_constraints:
+
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log//.log'
+    shell:
+        '''
+            python {params.coverage_script} {params.coverage_dir} > {log.get_wiggle_log} 2>&1
+        '''
+
+rule :
+    input:
+
+    output:
+
+    params:
+
+    wildcard_constraints:
+
+    threads:
+        config.get('threads_mapping')
+
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log//.log'
+    shell:
+        '''
+            
+        '''

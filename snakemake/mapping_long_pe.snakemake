@@ -1,0 +1,391 @@
+include: 'common.snakemake'
+
+star_map_steps = ['rRNA', 'genome', 'circRNA']
+map_steps = list(star_map_steps)
+if config.get('remove_duplicates_long'):
+    map_steps += ['genome_rmdup', 'circRNA_rmdup', 'rRNA_rmdup']
+
+root_dir=config.get("root_dir")
+
+def get_all_inputs(wildcards):
+    available_inputs = dict(
+        unmapped=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',
+            output_dir=config.get("output_dir"), sample_id=sample_ids, mate_index=[1,2]),
+        map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',
+            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
+        map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',
+            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
+        summarize_read_length=expand('{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',
+            output_dir=config.get("output_dir"), sample_id=sample_ids),
+        summarize_insert_size=expand('{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',
+            output_dir=config.get("output_dir"), sample_id=sample_ids),
+        # plot_bam=expand('{output_dir}/samtools_stats/{sample_id}/plot/{map_step}.html',
+        #     output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
+        count_clean_fragments=expand('{output_dir}/stats/fragment_counts/{sample_id}/clean',
+            output_dir=config.get("output_dir"), sample_id=sample_ids),
+        count_clean_reads_counts=expand('{output_dir}/stats/read_counts_clean/{sample_id}',
+            output_dir=config.get("output_dir"), sample_id=sample_ids),
+        summary_mapping_star=expand('{output_dir}/summary/mapping_star.txt',
+            output_dir=config.get("output_dir"))
+        # summarize_mapping_star=expand('{output_dir}/summary/mapping_star.html',
+        #     output_dir=config.get("output_dir"))
+    )
+    enabled_inputs = list(available_inputs.keys())
+    inputs = []
+    for key, l in available_inputs.items():
+        if key in enabled_inputs:
+            inputs += l
+    return inputs
+
+rule all:
+    input:
+        get_all_inputs
+
+rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文件夹中
+    input:
+        auto_gzip_input('{output_dir}/cutadapt/{sample_id}_{mate_index}.fastq')
+    output:
+        '{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz'
+    wildcard_constraints:
+        mate_index='[12]'
+    threads: 
+        config.get('threads_compress')
+    conda:
+        "envs/mapping.yaml"
+    shell:
+        r'''{root_dir}/bin/auto_uncompress {input} \
+            | awk 'NR%4==1{{printf "@%012d\n", int(NR/4);next}} NR%4==3{{printf "+\n";next}} {{print}}' \
+            | pigz -c -p {threads} > {output}
+        '''
+        
+rule count_clean_reads_paired:
+    input:
+        '{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz'
+    output:
+        '{output_dir}/stats/read_counts_clean/{sample_id}'
+    threads:
+        config.get('threads_compress')
+    conda:
+        "envs/mapping.yaml"
+    shell:
+        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output}
+        '''
+
+rule count_clean_fragments:
+    input:
+        '{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz'
+    output:
+        '{output_dir}/stats/fragment_counts/{sample_id}/clean'
+    threads:
+        config.get('threads_compress')
+    conda:
+        "envs/mapping.yaml"
+    shell:
+        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output}
+        '''
+
+rule map_rRNA_pe:
+    input:
+        reads1='{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz',
+        reads2='{output_dir}/unmapped/{sample_id}/clean_2.fastq.gz'
+    output:
+        bam='{output_dir}/bam/{sample_id}/rRNA.bam',
+        unmapped1='{output_dir}/unmapped/{sample_id}/rRNA_1.fastq.gz',
+        unmapped2='{output_dir}/unmapped/{sample_id}/rRNA_2.fastq.gz',
+        log='{output_dir}/mapping_star/{sample_id}/rRNA/Log.final.out'
+    params:
+        output_prefix='{output_dir}/mapping_star/{sample_id}/rRNA/',
+        index=config.get("genome_dir") + '/index/star/rRNA',
+        seedPerWindowNmax=20
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/mapping.yaml"
+    log:
+        '{output_dir}/log/mapping/rRNA/{sample_id}.log'
+    shell:
+        '''STAR --genomeDir {params.index} \
+            --readFilesIn {input.reads1} {input.reads2} \
+            --runThreadN {threads} \
+            --outFileNamePrefix {params.output_prefix} \
+            --outSAMtype BAM Unsorted \
+            --outReadsUnmapped Fastx \
+            --readFilesCommand pigz -p {threads} -d -c \
+            --outSAMmultNmax 1 \
+            --seedPerWindowNmax {params.seedPerWindowNmax}
+        mv {params.output_prefix}Aligned.out.bam {output.bam}
+        cp {output.log} {log}
+        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
+        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+        rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
+        '''
+
+rule map_genome_pe_1st:
+    input:
+        reads1='{output_dir}/unmapped/{sample_id}/rRNA_1.fastq.gz',
+        reads2='{output_dir}/unmapped/{sample_id}/rRNA_2.fastq.gz'
+    output:
+        bam='{output_dir}/bam/{sample_id}/genome.bam',
+        log='{output_dir}/mapping_star/{sample_id}/genome_1st/Log.final.out',
+        sjdbFileChrStartEnd='{output_dir}/mapping_star/{sample_id}/genome_1st/SJ.out.tab'
+    params:
+        output_prefix='{output_dir}/mapping_star/{sample_id}/genome_1st/',
+        index=config.get("genome_dir") + '/long_index/star',
+        seedPerWindowNmax=50
+    conda:
+        "envs/mapping.yaml"
+    threads:
+        config.get('threads_mapping')
+    log:
+        '{output_dir}/log/mapping/genome_1st/{sample_id}.log'
+    shell:
+        '''STAR --genomeDir {params.index} \
+            --readFilesIn {input.reads1} {input.reads2} \
+            --runThreadN {threads} \
+            --outFileNamePrefix {params.output_prefix} \
+            --outSAMtype BAM Unsorted \
+            --readFilesCommand pigz -p {threads} -d -c \
+            --outSAMmultNmax 1 \
+            --seedPerWindowNmax {params.seedPerWindowNmax} ; \
+        mv {params.output_prefix}Aligned.out.bam {output.bam}
+        cp {output.log} {log}
+        '''
+
+rule map_genome_pe_2nd:
+    input:
+        reads1='{output_dir}/unmapped/{sample_id}/rRNA_1.fastq.gz',
+        reads2='{output_dir}/unmapped/{sample_id}/rRNA_2.fastq.gz',
+        sjdbFileChrStartEnd=expand('{output_dir}/mapping_star/{sample_id}/genome_1st/SJ.out.tab',output_dir=config.get("output_dir"),sample_id=sample_ids)
+    output:
+        unmapped1='{output_dir}/unmapped/{sample_id}/genome_1.fastq.gz',
+        unmapped2='{output_dir}/unmapped/{sample_id}/genome_2.fastq.gz',
+        log='{output_dir}/mapping_star/{sample_id}/genome/Log.final.out'
+    params:
+        output_prefix='{output_dir}/mapping_star/{sample_id}/genome/',
+        index=config.get("genome_dir") + '/long_index/star',
+        seedPerWindowNmax=50
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/mapping.yaml"
+    log:
+        '{output_dir}/log/mapping/genome_2nd/{sample_id}.log'
+    shell:
+        '''STAR --genomeDir {params.index} \
+            --readFilesIn {input.reads1} {input.reads2} \
+            --runThreadN {threads} \
+            --outFileNamePrefix {params.output_prefix} \
+            --outSAMtype BAM Unsorted \
+            --outReadsUnmapped Fastx \
+            --readFilesCommand pigz -p {threads} -d -c \
+            --outSAMmultNmax 1 \
+            --sjdbFileChrStartEnd {input.sjdbFileChrStartEnd} \
+            --seedPerWindowNmax {params.seedPerWindowNmax} \
+            \
+            --chimSegmentMin 12 \
+            --chimJunctionOverhangMin 12 \
+            --alignSJDBoverhangMin 10 \
+            --alignMatesGapMax 100000 \
+            --alignIntronMax 100000 \
+            --alignSJstitchMismatchNmax 5 -1 5 5 \
+            --outSAMattrRGline ID:GRPundef \
+            --chimScoreJunctionNonGTAG -4 \
+            --limitSjdbInsertNsj=5000000
+        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
+        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+        rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
+        '''
+
+rule map_circRNA_pe:
+    input:
+        reads1='{output_dir}/unmapped/{sample_id}/genome_1.fastq.gz',
+        reads2='{output_dir}/unmapped/{sample_id}/genome_2.fastq.gz'
+    output:
+        bam='{output_dir}/bam/{sample_id}/circRNA.bam',
+        unmapped1='{output_dir}/unmapped/{sample_id}/circRNA_1.fastq.gz',
+        unmapped2='{output_dir}/unmapped/{sample_id}/circRNA_2.fastq.gz',
+        log='{output_dir}/mapping_star/{sample_id}/circRNA/Log.final.out'
+    params:
+        output_prefix='{output_dir}/mapping_star/{sample_id}/circRNA/',
+        index=config.get("genome_dir") + '/index/star/circRNA',
+        seedPerWindowNmax=20
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/mapping.yaml"
+    log:
+        '{output_dir}/log/mapping/circRNA/{sample_id}.log'
+    shell:
+        '''STAR --genomeDir {params.index} \
+            --readFilesIn {input.reads1} {input.reads2} \
+            --runThreadN {threads} \
+            --outFileNamePrefix {params.output_prefix} \
+            --outSAMtype BAM Unsorted \
+            --outReadsUnmapped Fastx \
+            --readFilesCommand pigz -p {threads} -d -c \
+            --outSAMmultNmax 1 \
+            --seedPerWindowNmax {params.seedPerWindowNmax}
+        mv {params.output_prefix}Aligned.out.bam {output.bam}
+        cp {output.log} {log}
+        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
+        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+        rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
+        '''
+
+rule sort_bam_by_name:
+    input:
+        '{output_dir}/bam/{sample_id}/{map_step}.bam'
+    output:
+        '{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam'
+    conda:
+        "envs/mapping.yaml"
+    params:
+        temp_dir=config.get('temp_dir')
+    shell:
+        '''samtools sort -n -T {params.temp_dir} -o {output} {input}
+        '''
+
+rule remove_duplicates:
+    input:
+        bam='{output_dir}/bam/{sample_id}/{map_step}.bam'
+    output:
+        bam='{output_dir}/bam/{sample_id}/{map_step}_rmdup.bam',
+        metrics='{output_dir}/log/mapping/{map_step}_rmdup/{sample_id}.log'
+    conda:
+        "envs/mapping.yaml"
+    wildcard_constraints:
+        map_step='(rRNA)|(genome)|(circRNA)'
+    shell:
+        '''picard MarkDuplicates REMOVE_DUPLICATES=true \
+            ASSUME_SORT_ORDER=queryname \
+            I={input.bam} \
+            O={output.bam} \
+            M={output.metrics} \
+            READ_NAME_REGEX=null
+        '''
+
+rule samtools_stats:
+    input:
+        '{output_dir}/bam/{sample_id}/{map_step}.bam'
+    output:
+        txt='{output_dir}/samtools_stats/{sample_id}/{map_step}.txt'
+    conda:
+        "envs/mapping.yaml"
+    shell:
+        '''samtools stats {input} > {output.txt}
+        '''
+
+## 这部分暂时不要
+# rule samtools_stats:
+#     input:
+#         '{output_dir}/bam/{sample_id}/{map_step}.bam'
+#     output:
+#         txt='{output_dir}/samtools_stats/{sample_id}/{map_step}.txt',
+#         html='{output_dir}/samtools_stats/{sample_id}/plot/{map_step}.html'
+#     params:
+#         out_file='{output_dir}/samtools_stats/{sample_id}/plot/{map_step}'
+#     shell:
+#         '''samtools stats {input} > {output.txt}; \
+#             plot-bamstats -p {params.out_file}  {output.txt}
+#         '''
+
+## 以下是以下是对以上结果的解释和统计
+
+rule parse_samtools_stats_pe:
+    input:
+        '{output_dir}/samtools_stats/{sample_id}/{map_step}.txt'
+    output:
+        fragment_counts='{output_dir}/stats/fragment_counts/{sample_id}/{map_step}',
+        insert_size_average='{output_dir}/stats/insert_size_average/{sample_id}/{map_step}',
+        insert_size_hist='{output_dir}/stats/insert_size_hist/{sample_id}/{map_step}',
+        read_length_hist='{output_dir}/stats/read_length_hist/{sample_id}/{map_step}'
+    conda:
+        "envs/mapping.yaml"
+    wildcard_constraints:
+        map_step='(?!clean).*'
+    shell:
+        '''awk 'BEGIN{{OFS="\t";FS="\t"}}/^SN/{{if($2 == "reads mapped and paired:") print int($3/2)}}' {input} > {output.fragment_counts}
+           awk 'BEGIN{{OFS="\t";FS="\t"}}/^SN/{{if($2 == "insert size average:") print $3}}' {input} > {output.insert_size_average}
+           awk 'BEGIN{{OFS="\t";FS="\t"}}/^IS/{{print $2,$3}}' {input} > {output.insert_size_hist}
+           awk 'BEGIN{{OFS="\t";FS="\t"}}/^RL/{{print $2,$3}}' {input} > {output.read_length_hist}
+        '''
+
+rule summarize_read_length:
+    input:
+        lambda wildcards: expand('{output_dir}/stats/read_length_hist/{sample_id}/{map_step}',
+            output_dir=wildcards.output_dir, sample_id=wildcards.sample_id, map_step=map_steps)
+    output:
+        '{output_dir}/stats/mapped_read_length_by_sample/{sample_id}'
+    run:
+        import pandas as pd
+
+        matrix = {}
+        for filename in input:
+            map_step = filename.split('/')[-1]
+            matrix[map_step] = pd.read_table(filename, sep='\t', index_col=0, header=None, names=['read_length', map_step]).iloc[:, 0]
+        matrix = pd.DataFrame(matrix)
+        matrix = matrix.loc[:, map_steps]
+        matrix.fillna(0, inplace=True)
+        matrix = matrix.astype('int')
+        matrix.index.name = 'read_length'
+        matrix.to_csv(output[0], sep='\t', header=True, index=True)
+
+rule summarize_insert_size:
+    input:
+        lambda wildcards: expand('{output_dir}/stats/insert_size_hist/{sample_id}/{map_step}',
+            output_dir=wildcards.output_dir, sample_id=wildcards.sample_id, map_step=map_steps)
+    output:
+        '{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}'
+    run:
+        import pandas as pd
+
+        matrix = {}
+        for filename in input:
+            map_step = filename.split('/')[-1]
+            matrix[map_step] = pd.read_table(filename, sep='\t', index_col=0, header=None, names=['insert_size', map_step]).iloc[:, 0]
+        matrix = pd.DataFrame(matrix)
+        matrix = matrix.loc[:, map_steps]
+        matrix.fillna(0, inplace=True)
+        matrix = matrix.astype('int')
+        matrix.index.name = 'insert_size'
+        matrix.to_csv(output[0], sep='\t', header=True, index=True)
+
+rule summarize_mapping_star:
+    input:
+        lambda wildcards: expand('{output_dir}/mapping_star/{sample_id}/{map_step}/Log.final.out',
+            output_dir=wildcards.output_dir, sample_id=sample_ids, map_step=star_map_steps)
+    output:
+        '{output_dir}/summary/mapping_star.txt'
+    run:
+        import pandas as pd
+
+        records = []
+        columns = ['sample_id', 'map_step']
+        for i, filename in enumerate(input):
+            map_step = filename.split('/')[-2]
+            sample_id = filename.split('/')[-3]
+            record = {'sample_id': sample_id, 'map_step': map_step}
+            with open(filename, 'r') as fin:
+                for line in fin:
+                    c = line.strip().split('|')
+                    if len(c) == 2:
+                        key, val = c[0].strip(), c[1].strip()
+                        record[key] = val
+                        if i == 0:
+                            columns.append(key)
+            records.append(record)
+        summary = pd.DataFrame.from_records(records)
+        summary = summary.reindex(columns=columns)
+        summary.set_index('sample_id', inplace=True)
+        summary.index.name = 'sample_id'
+        summary.to_csv(output[0], sep='\t', header=True, na_rep='NA', index=True)
+
+rule summarize_fragment_counts_jupyter:
+    input:
+        summary='{output_dir}/summary/mapping_star.txt',
+        jupyter=config.get("root_dir") + '/templates/summarize_mapping_star.ipynb'
+    output:
+        jupyter='{output_dir}/summary/mapping_star.ipynb',
+        html='{output_dir}/summary/mapping_star.html'
+    run:
+        shell(nbconvert_command)

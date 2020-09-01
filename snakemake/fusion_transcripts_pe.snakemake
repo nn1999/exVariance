@@ -1,0 +1,31 @@
+shell.prefix('set -x;')
+include: 'common.snakemake'
+
+ctat_lib_dir=config.get("ctat_lib_dir")
+output_dir=config.get("output_dir")
+
+rule all:
+    input:
+        expand('{output_dir}/fusion/{sample_id}/star-fusion.fusion_predictions.abridged.tsv',output_dir=output_dir, sample_id=sample_ids)
+
+
+## star-fusion 需要使用python2.7环境
+rule fusion_transcripts:
+    input:
+        left_fq='{output_dir}/cutadapt/{sample_id}_1.fastq.gz',
+        right_fq='{output_dir}/cutadapt/{sample_id}_2.fastq.gz'
+    output:
+        '{output_dir}/fusion/{sample_id}/star-fusion.fusion_predictions.abridged.tsv'
+    params:
+        output_dir='{output_dir}/fusion/{sample_id}'    
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/fusion_transcripts.yaml"
+    log:
+        '{output_dir}/log/fusion_transcripts/{sample_id}.log'
+    shell:
+        '''STAR-Fusion \
+          --CPU {threads} --genome_lib_dir {ctat_lib_dir} --left_fq {input.left_fq} --right_fq {input.right_fq} \
+          --output_dir {params.output_dir} > {log} 2>&1
+        '''

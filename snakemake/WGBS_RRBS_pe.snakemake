@@ -1,0 +1,151 @@
+include: 'common.snakemake'
+
+import shutil
+
+root_dir=config.get('root_dir')
+data_dir=config.get('data_dir')
+output_dir=config.get('output_dir')
+
+
+rule all:
+    input:
+        expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.html',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/multiQC_summary/fastqc_data',output_dir=output_dir),
+        expand('{output_dir}/bismark_methylation_extract/{sample_id}.bismark.wig.gz',output_dir=output_dir,sample_id=sample_ids)
+
+rule fastqc_pe:
+    input:
+        auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_{mate_index}.fastq')
+    output:
+        html='{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.html',
+        zip='{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip'
+    params:
+        output_prefix='{output_dir}/fastqc/',
+        temp_dir=config['temp_dir']
+    wildcard_constraints:
+        mate_index='[12]'
+    conda:
+        "envs/quality_control.yaml"
+    log:
+        '{output_dir}/log/quality_control/fastqc/{sample_id}_{mate_index}.log'
+    shell:
+        '''rm -rf {params.temp_dir};
+            mkdir {params.temp_dir};
+            fastqc -q -o {params.output_prefix} -d {params.temp_dir} {input} > {log} 2>&1
+        '''
+
+rule multiqc_pe:
+    input:
+        fastqc=expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',
+            output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2])
+    output:
+        html='{output_dir}/multiQC_summary/fastqc.html',
+        data=directory('{output_dir}/multiQC_summary/fastqc_data')
+    params:
+        fastqc_dir='{output_dir}/fastqc'
+    wildcard_constraints:
+        mate_index='[12]'
+    conda:
+        "envs/quality_control.yaml"
+    log:
+        '{output_dir}/log/quality_control/multiqc.log'
+    shell:
+        '''multiqc -m fastqc -n {output.html} {params.fastqc_dir} > {log} 2>&1
+        '''
+
+rule trim_galore_pe:
+    input:
+        fastq1=config.get('data_dir') + '/fastq/{sample_id}_1.fastq',
+        fastq2=config.get('data_dir') + '/fastq/{sample_id}_2.fastq'
+    output:
+        trim_fastq1='{output_dir}/trim_galore_pe_out/{sample_id}_trim_1.fq',
+        trim_fastq2='{output_dir}/trim_galore_pe_out/{sample_id}_trim_2.fq',
+        trim_report1='{output_dir}/trim_galore_pe_out/{sample_id}_1.fastq_trimming_report.txt',
+        trim_report2='{output_dir}/trim_galore_pe_out/{sample_id}_2.fastq_trimming_report.txt'
+    params:
+        trim_galore_out_dir='{output_dir}/trim_galore_pe_out',
+        trimmed_fastq1='{output_dir}/trim_galore_pe_out/{sample_id}_1_val_1.fq',
+        trimmed_fastq2='{output_dir}/trim_galore_pe_out/{sample_id}_2_val_2.fq'
+    conda:
+        'envs/WGBS_RRBS.yaml'
+    threads:
+        config.get('threads_compress')
+    log:
+        '{output_dir}/log/trim_galore_pe/{sample_id}.log'
+    shell:
+        '''
+            trim_galore --rrbs --illumina --phred33 --paired {input.fastq1} {input.fastq2} -o {params.trim_galore_out_dir} > {log} 2>&1 ; \
+            mv {params.trimmed_fastq1} {output.trim_fastq1}; \
+            mv {params.trimmed_fastq2} {output.trim_fastq2};
+        '''
+
+rule bismark_mapping:
+    input:
+        trim_fastq1='{output_dir}/trim_galore_pe_out/{sample_id}_trim_1.fq',
+        trim_fastq2='{output_dir}/trim_galore_pe_out/{sample_id}_trim_2.fq'
+    output:
+        bam_file='{output_dir}/bismark_bam/{sample_id}.bam'
+    params:
+        genome=config.get('genome_dir'),
+        bowtie2_bin_dir=config.get('bowtie_bin_dir'),
+        tmp_dir=config.get('temp_dir'),
+        bam_dir='{output_dir}/bismark_bam/',
+        bam_file='{output_dir}/bismark_bam/{sample_id}_trim_1_bismark_bt2_pe.bam'
+    threads:
+        8    ## using more than 4 cores per alignment thread has been reported to have diminishing returns. If possible try to limit -p to a value of 4
+    conda:
+        "envs/WGBS_RRBS.yaml"
+    log:
+        '{output_dir}/log/bismark_bam/{sample_id}.log'
+    shell:
+        '''
+            bismark -p 4 {params.genome}/WGBS_RRBS/ --path_to_bowtie {params.bowtie2_bin_dir} --bowtie2 \
+            -1 {input.trim_fastq1} -2 {input.trim_fastq2} -o {params.bam_dir} --temp_dir {params.tmp_dir} > {log} 2>&1;
+            mv {params.bam_file} {output.bam_file}
+        '''
+
+rule bismark_methylation_extract:
+    input:
+        bam_file='{output_dir}/bismark_bam/{sample_id}.bam'
+    output:
+        m_bias='{output_dir}/bismark_methylation_extract/{sample_id}.M-bias.txt',
+        splitting_report='{output_dir}/bismark_methylation_extract/{sample_id}_splitting_report.txt',
+        coverage_dir='{output_dir}/bismark_methylation_extract/{sample_id}.bismark.cov.gz'
+    params:
+        coverage_dir='{output_dir}/bismark_methylation_extract'
+        # merge_script='{root_dir}/bin/dna_meth/WGBS_RRBS/merge_cpg_pos.py',
+        # genome=config.get('genome_dir')
+    threads:
+        config.get('threads_compress')
+    conda:
+        "envs/WGBS_RRBS.yaml"
+    log:
+        methylation_extract_log='{output_dir}/log/bismark_methylation_extract/{sample_id}.log',
+        # merge_log='{output_dir}/log/merge_cpg_position/{sample_id}.log'
+    shell:
+        '''
+            bismark_methylation_extractor --parallel {threads} -p {input.bam_file} --bedGraph --counts -o {params.coverage_dir}
+        '''
+
+            # python {params.merge_script} -i {params.coverage_dir} -p {threads} -f {params.genome}/CpGs/hg38_cpgs.txt.gz > {log.merge_log} 2>&1; \
+
+
+rule merge_cpg_position_and_get_wiggle_file:
+    input:
+        coverage_dir='{output_dir}/bismark_methylation_extract/{sample_id}.bismark.cov.gz'
+    output:
+        wig_file='{output_dir}/bismark_methylation_extract/{sample_id}.bismark.wig.gz'
+    params:
+        coverage_dir='{output_dir}/bismark_methylation_extract',
+        coverage_script=config.get('root_dir') + '/bin/dna_meth/WGBS_RRBS/coverage_to_wig.py'
+    threads:
+        config.get('threads_compress')
+    conda:
+        "envs/WGBS_RRBS.yaml"
+    log:
+        get_wiggle_log='{output_dir}/log/get_wiggle/{sample_id}.log'
+    shell:
+        '''
+            python {params.coverage_script} {params.coverage_dir} > {log.get_wiggle_log} 2>&1
+        '''

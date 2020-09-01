@@ -1,0 +1,350 @@
+include: 'common.snakemake'
+
+root_dir=config.get('root_dir')
+annovar_dir=config.get('annovar_dir')  ##补充annovar_dir到注释文件中
+
+
+rule all:
+    input:
+        bam_index='{output_dir}/mapping/{sample_id}.dedup.bam.bai',
+        snp_filter='{output_dir}/MrBam/{sample_id}.snp_MrBam.txt',
+        indel_filter='{output_dir}/MrBam/{sample_id}.indel_MrBam.txt',
+        mutscan='{output_dir}/mutscan/{sample_id}_mutscan.html'
+
+## 这一步需要切换至python2.7环境下，后续需要在建立环境时创建一个python2.7环境，替代fusion-inspector当前环境。
+rule afterQC:
+    input:
+        read1='auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_1.fastq')',
+        read2='auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_2.fastq')'
+    output:
+        read1='{output_dir}/afterQC/{sample_id}_1.good.fq.gz',
+        read2='{output_dir}/afterQC/{sample_id}_2.good.fq.gz'
+    params:
+        out_file='{output_dir}/afterQC'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/afterQC/{sample_id}.log'
+    shell:
+        '''after.py \
+            -1 {input.read1} -2 {input.read2} \
+            -g {params.out_file} \
+            -b {params.out_file} \
+            -r {params.out_file} \
+            > {log} 2>&1
+        '''
+
+rule bwa_index:
+    input:
+        genome_fa=config.get("genome_dir") + '/fasta/genome.fa'
+    output:
+        genome_index='{output_dir}/mapping/genome_index/genome'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/bwa_index.log'
+    shell:
+        '''bwa index {input.genome_fa} \
+            -p {output.genome_index} \
+            > {log} 2>&1
+        '''
+
+rule bwa_alignment:
+    input:
+        read1='{output_dir}/afterQC/{sample_id}_1.good.fq.gz',
+        read2='{output_dir}/afterQC/{sample_id}_2.good.fq.gz'
+    output:
+        sam='{output_dir}/mapping/{sample_id}.sam'
+    threads:
+        config.get('threads_mapping')
+    params:
+        genome_fa=config.get("genome_dir") + '/fasta/genome.fa'  ##这个位置在运行的时候好像有问题
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/bwa_alignment/{sample_id}.log'
+    shell:
+        '''bwa mem \
+            -k 32 \
+            -t {threads} \
+            -M {params.genome_fa} \
+            {input.read1} {input.read2} \
+            > {output.sam} 2> {log}
+        '''
+
+rule sam2bam:
+    input:
+        sam='{output_dir}/mapping/{sample_id}.sam'
+    output:
+        bam='{output_dir}/mapping/{sample_id}.bam'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/sam2bam/{sample_id}.log'
+    shell:
+        '''samtools view \
+            -bS \
+            -@ {threads} \
+            {inout.sam} \
+            -o {output.bam} \
+            > {log} 2>&1
+        '''
+
+rule bam_sort:
+    input:
+        bam='{output_dir}/mapping/{sample_id}.bam'
+    output:
+        sorted_bam='{output_dir}/mapping/{sample_id}.sorted.bam'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/bam_sort/{sample_id}.log'
+    shell:
+        '''samtools sort \
+            -@ {threads} \
+            {input.bam} \
+            -f {output.sorted_bam} \
+            > {log} 2>&1
+        '''
+
+
+
+
+
+
+
+
+
+
+rule deduplication:
+    input:
+        sorted_bam='{output_dir}/mapping/{sample_id}.sorted.bam'
+    output:
+        dedup_bam='{output_dir}/mapping/{sample_id}.dedup.bam'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/deduplication/{sample_id}.log'
+    shell:
+        '''python {root_dir}/bin/dedup.py \
+            -1 outdir/test.sort.bam \
+            -o outdir/test.dedup.bam \
+            > {log} 2>&1
+        '''
+
+rule index_dedup_bam:
+    input:
+        dedup_bam='{output_dir}/mapping/{sample_id}.dedup.bam'
+    output:
+        index='{output_dir}/mapping/{sample_id}.dedup.bam.bai'  ##这个文件名称需要确认！！
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/index_dedup_bam/{sample_id}.log'
+    shell:
+        '''samtools index {input.dedup_bam} > {log} 2>&1
+        '''
+
+# target.bed is a BED file describing the target capturing regions
+rule generate_mpileup:
+    input:
+        dedup_bam='{output_dir}/mapping/{sample_id}.dedup.bam'
+    output:
+        mpileup='{output_dir}/mpileup/{sample_id}.dedup.mpileup'
+    params:
+        genome_fa=config.get("genome_dir") + '/fasta/genome.fa'
+        target_bed=    ##需要填写或生成target capturing regions，demon data可以直接下载
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/generate_mpileup/{sample_id}.log'
+    shell:
+        '''samtools mpileup -B -Q 20 -C 50 -q 20 -d 20000 \
+            -f {params.genome_fa} \
+            -l {params.target_bed}  \
+            outdir/test.dedup.bam \
+            > outdir/test.dedup.mpileup \
+            2> {log}
+        '''
+
+rule SNP_calling:
+    input:
+        mpileup='{output_dir}/mpileup/{sample_id}.dedup.mpileup'
+    output:
+        snp='{output_dir}/snp/{sample_id}.snp.vcf'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/SNP_calling/{sample_id}.log'
+    shell:
+        '''varscan mpileup2snp {input.mpileup} \
+            --min-coverage 4 \
+            --min-reads2 2 \
+            --min-avg-qual 20 \
+            --min-var-freq 0.001 \
+            --min-freq-for-hom 90 \
+            --output-vcf 1 \
+            > {output.snp} \
+            2> {log}
+        '''
+
+rule INDEL_calling:
+    input:
+        mpileup='{output_dir}/mpileup/{sample_id}.dedup.mpileup'
+    output:
+        indel='{output_dir}/snp/{sample_id}.indel.vcf'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/INDEL_calling/{sample_id}.log'
+    shell:
+        '''varscan mpileup2indel {input.mpileup} \
+            --min-coverage 4 \
+            --min-reads2 2 \
+            --min-avg-qual 20 \
+            --min-var-freq 0.001 \
+            --min-freq-for-hom 90 \
+            --output-vcf 1 \
+            > {output.indel} \
+            2> {log}
+        '''
+
+rule Annovar_annotation:
+    input:
+        snp='{output_dir}/snp/{sample_id}.snp.vcf',
+        indel='{output_dir}/snp/{sample_id}.indel.vcf'
+    output:
+        snp='{output_dir}/annovar/{sample_id}.snp.vcf',
+        indel='{output_dir}/annovar/{sample_id}.indel.vcf',
+        snp_multianno='{output_dir}/annovar/{sample_id}.snp.hg19_multianno.txt',
+        indel_multianno='{output_dir}/annovar/{sample_id}.indel.hg19_multianno.txt'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        snp='{output_dir}/log/ctdna/Annovar_annotation/{sample_id}.snp.log',
+        snp='{output_dir}/log/ctdna/Annovar_annotation/{sample_id}.indel.log'
+    shell:
+        '''{annovar_dir}/table_annovar.pl {input.snp} \
+                {annovar_dir}/humandb_hg38/ \
+                -buildver hg38 \
+                -out {output.snp} \
+                -remove \
+                -protocol refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2014oct_all,1000g2014oct_afr,1000g2014oct_eas,1000g2014oct_eur,snp138,ljb26_all,cosmic77,clinvar_20160302 \
+                -operation g,r,r,f,f,f,f,f,f,f,f,f \
+                -nastring . \
+                -vcfinput \
+                > {log.snp} 2>&1; \
+           {annovar_dir}/table_annovar.pl {input.indel} \
+                {annovar_dir}/humandb_hg38/ \
+                -buildver hg38 \
+                -out {output.indel} \
+                -remove \
+                -protocol refGene,cytoBand,genomicSuperDups,esp6500siv2_all,1000g2014oct_all,1000g2014oct_afr,1000g2014oct_eas,1000g2014oct_eur,snp138,ljb26_all,cosmic77,clinvar_20160302 \
+                -operation g,r,r,f,f,f,f,f,f,f,f,f \
+                -nastring . \
+                -vcfinput \
+                > {log.indel} 2>&1
+
+        '''
+
+rule mutated_reads_counting_with_MrBam:
+    input:
+        dedup_bam='{output_dir}/mapping/{sample_id}.dedup.bam',
+        snp_multianno='{output_dir}/annovar/{sample_id}.snp.hg19_multianno.txt',
+        indel_multianno='{output_dir}/annovar/{sample_id}.indel.hg19_multianno.txt'
+    output:
+        snp='{output_dir}/MrBam/{sample_id}.snp_MrBam.txt',
+        indel='{output_dir}/MrBam/{sample_id}.indel_MrBam.txt'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        snp='{output_dir}/log/ctdna/mutated_reads_counting_with_MrBam/{sample_id}.snp.log',
+        indel='{output_dir}/log/ctdna/mutated_reads_counting_with_MrBam/{sample_id}.indel.log'
+    shell:
+        '''python3 \
+                -m {root_dir}/bin/MrBam/MrBam/main.py \
+                -o {output.snp} \
+                -m 3 \
+                -q 25 \
+                --fast \
+                --cfdna {input.dedup_bam} \
+                --skip 1 \
+                {input.snp_multianno} \
+                > {log.snp} 2>&1 ; \
+           python3 \
+                -m {root_dir}/bin/MrBam/MrBam/main.py \
+                -o {output.indel} 
+                -m 3 \
+                -q 25 \
+                --fast \
+                --cfdna {input.dedup_bam} \
+                --skip 1 \
+                {input.indel_multianno} \
+                > {log.indel} 2>&1
+        '''
+
+rule SNP/INDEL_filtering:
+    input:
+        snp='{output_dir}/MrBam/{sample_id}.snp_MrBam.txt',
+        indel='{output_dir}/MrBam/{sample_id}.indel_MrBam.txt'
+    output:
+        snp_filter='{output_dir}/MrBam/{sample_id}.snp_MrBam.txt',
+        indel_filter='{output_dir}/MrBam/{sample_id}.indel_MrBam.txt'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        snp='{output_dir}/log/ctdna/snp_filtering/{sample_id}.log',
+        indel='{output_dir}/log/ctdna/indel_filtering/{sample_id}.log'
+    shell:
+        '''perl {root_dir}/bin/ctdna_filter.pl {input.snp} {output.snp_filter} 2 0.3 > {log.snp} 2>&1
+           perl {root_dir}/bin/ctdna_filter.pl {input.indel} {output.indel_filter} 2 0.3 > {log.indel} 2>&1
+        '''
+
+rule check_for_important_drugable_mutations_by_MutScan:
+    input:
+        read1='{output_dir}/afterQC/{sample_id}_1.good.fq.gz',
+        read2='{output_dir}/afterQC/{sample_id}_2.good.fq.gz'
+    output:
+        mutscan='{output_dir}/mutscan/{sample_id}_mutscan.html'
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/check_for_important_drugable_mutations_by_MutScan/{sample_id}.log'
+    shell:
+        '''mutscan \
+            -1 {input.read1} \
+            -2 {input.read2} \
+            -h {output.mutscan} \
+            > {log} 2>&1
+        '''
+
+##需要预先下载genefuse相关的csv文件
+rule check_for_important_drugable_mutations_by_GeneFuse:
+    input:
+        read1='{output_dir}/afterQC/{sample_id}_1.good.fq.gz',
+        read2='{output_dir}/afterQC/{sample_id}_2.good.fq.gz'
+    output:
+        genefuse='{output_dir}/genefuse/{sample_id}_mutscan.html'
+    params:
+        genome_fa=config.get("genome_dir") + '/fasta/genome.fa',
+        cosmic_fusion=config.get("genome_dir") + '../CosmicFusionExport.csv'    ##这个文件需要预先准备
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/ctdna.yaml"
+    log:
+        '{output_dir}/log/ctdna/check_for_important_drugable_mutations_by_GeneFuse/{sample_id}.log'
+    shell:
+        '''genefuse \
+            -t {threads} \
+            -1 {input.read1} \
+            -2 {input.read2} \
+            -r {params.genome_fa} \
+            -f {params.cosmic_fusion} \
+            -h {output.genefuse} \
+            > {log} 2>&1
+        '''

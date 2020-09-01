@@ -1,0 +1,31 @@
+# default config
+default_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/config/default_config.yaml
+
+# basicfigfile paths
+root_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software
+
+genome_dir: /lulab/lustre2/zhangshang/ref/hg38
+ctat_lib_dir: /lulab/lustre2/zhangshang/ref/CTAT_lib_yumin/ctat_genome_lib_build_dir
+
+data_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/data
+output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/output
+temp_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/temp
+
+RNAEditor_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/config/RNAEditor_configure.txt
+
+APA_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example/config/dapars_configure.txt
+
+# general parameters
+threads_compress: 4
+threads_mapping: 6
+
+# mapping parameters
+aligner: STAR
+adaptor1: AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC
+adaptor2: AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+paired_end: true
+small_rna: false
+strandness: forward
+count_method: featurecounts
+
+read_length: 100

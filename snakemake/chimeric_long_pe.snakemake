@@ -1,0 +1,43 @@
+include: 'common.snakemake'
+
+root_dir=config.get("root_dir")
+
+def get_all_inputs(wildcards):
+    
+    return inputs
+
+rule all:
+    input:
+        get_all_inputs
+
+rule star-fusion:
+    input:
+
+    output:
+
+    shell:   ##待写
+        '''STAR-Fusion --genome_lib_dir /path/to/your/CTAT_resource_lib \
+             -J Chimeric.out.junction \
+             --output_dir star_fusion_outdir
+        '''
+
+rule FusionInspector_inspect:
+    input:
+
+    output:
+
+    shell:   ##待写，注意需要使用fusion-inspector这个conda environment
+        '''FusionInspector --fusions fusions.listA.txt,fusions.listB.txt \
+                --genome_lib /path/to/CTAT_genome_lib \
+                --left_fq rnaseq_1.fq --right_fq rnaseq_2.fq \
+                --out_dir my_FusionInspector_outdir \
+                --out_prefix finspector \
+                --vis
+        '''
+
+rule FusionInspector_validate:
+    input:
+
+    output:
+
+    shell:   ##待写，注意需要使用fusion-inspector这个conda environment

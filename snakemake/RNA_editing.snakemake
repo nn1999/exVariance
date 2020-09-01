@@ -1,0 +1,65 @@
+shell.prefix('set -x;')
+include: 'common.snakemake'
+
+output_dir=config.get("output_dir")
+RNAEditor_config_file=config.get('RNAEditor_config_file')
+
+rule all:
+    input:
+        expand('{output_dir}/RNA_editing/{sample_id}/{sample_id}.html',output_dir=output_dir, sample_id=sample_ids)
+
+rule get_fasta_file:
+    input:
+        left_fq='{output_dir}/cutadapt/{sample_id}_1.fastq.gz',
+        right_fq='{output_dir}/cutadapt/{sample_id}_2.fastq.gz'
+    output:
+        tmp_left_fq='{output_dir}/RNA_editing/tmp/{sample_id}_1.fastq',
+        tmp_right_fq='{output_dir}/RNA_editing/tmp/{sample_id}_2.fastq'
+    threads:
+        config.get('threads_compress')
+    conda:
+        "envs/RNA_editing.yaml"
+    shell:
+        '''pigz -p {threads} -c -d {input.left_fq} > {output.tmp_left_fq}; \
+            pigz -p {threads} -c -d {input.right_fq} > {output.tmp_right_fq}; \
+        '''
+
+rule RNA_editing:
+    input:
+        tmp_left_fq='{output_dir}/RNA_editing/tmp/{sample_id}_1.fastq',
+        tmp_right_fq='{output_dir}/RNA_editing/tmp/{sample_id}_2.fastq'
+    output:
+        '{output_dir}/RNA_editing/{sample_id}/{sample_id}.html'
+    params:
+        outputFile_dir='{output_dir}/RNA_editing/{sample_id}',
+        outputFile='{output_dir}/RNA_editing/{sample_id}/{sample_id}',
+        tmp_config_file='{output_dir}/RNA_editing/tmp/config_file_{sample_id}.txt',
+        results_sam='{output_dir}/RNA_editing/{sample_id}/{sample_id}.sam',
+        results_bam='{output_dir}/RNA_editing/{sample_id}/{sample_id}.bam',
+        results_bam_bai='{output_dir}/RNA_editing/{sample_id}/{sample_id}.bam.bai',
+        results_noDup_bam='{output_dir}/RNA_editing/{sample_id}/{sample_id}.noDup.bam',
+        results_noDup_bam_bai='{output_dir}/RNA_editing/{sample_id}/{sample_id}.noDup.bai',
+        results_noDup_realigned_bam='{output_dir}/RNA_editing/{sample_id}/{sample_id}.noDup.realigned.bam',
+        results_noDup_realigned_bam_bai='{output_dir}/RNA_editing/{sample_id}/{sample_id}.noDup.realigned.bai',
+        results_noBlat_vcf_psl='{output_dir}/RNA_editing/{sample_id}/{sample_id}.noBlat.vcf.psl'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        "envs/RNA_editing.yaml"
+    log:
+        '{output_dir}/log/RNA_editing/{sample_id}.log'
+    shell:
+        '''mkdir -p {output_dir}/RNA_editing/tmp;  \
+            mkdir -p {params.outputFile_dir}; \
+            cp {RNAEditor_config_file}  {params.tmp_config_file} && echo "output = /data{params.outputFile}" >> {params.tmp_config_file}; \
+            docker pull hdf87ery/rnaeditor_docker; \
+            docker run  -v /:/data --rm hdf87ery/rnaeditor_docker   \
+                RNAEditor.py -i /data{input.tmp_left_fq} /data{input.tmp_right_fq}  \
+                -c /data{params.tmp_config_file} > {log} 2>&1 ; \
+            rm -f  {params.tmp_config_file};
+        '''
+
+            # rm -f {params.tmp_left_fq} {params.tmp_right_fq} {params.tmp_config_file}; \
+            # rm -f {params.results_sam} {params.results_bam}  {params.results_bam_bai}   \
+            #     {params.results_noDup_bam} {params.results_noDup_bam_bai} {params.results_noDup_realigned_bam} \
+            #     {params.results_noDup_realigned_bam_bai}  {params.results_noBlat_vcf_psl}

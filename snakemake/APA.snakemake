@@ -1,0 +1,75 @@
+shell.prefix('set -x;')
+include: 'common.snakemake'
+
+APA_config_file=config.get('APA_config_file')
+
+## 由于DaPars使用的是python2.7的环境，所以额外在desktop中添加了python2.7的conda环境，以下所有工作均在python2.7环境下完成，后续需要在snakemake中天健环境信息
+
+
+
+rule all:
+    input:
+        expand('{output_dir}/SNP/annotation_file/extracted_3UTR.bed',output_dir=config.get("output_dir")),
+        expand('{output_dir}/SNP/{sample_id}/{map_step}_rmdup.bedgraph',output_dir=config.get("output_dir"),sample_id=sample_ids,map_step='genome')
+
+rule gtf2bed:
+    input:
+        '{genome_dir}/gtf/gencode.gtf'
+    output:
+        '{output_dir}/SNP/annotation_file/genconde.bed'
+    params:
+        tmp_genepred='{output_dir}/SNP/genconde.GenePred'
+    conda:
+
+    shell:
+        '''gtfToGenePred {input} {params.tmp_genepred} && genePredToBed {params.tmp_genepred} {output} && rm {params.tmp_genepred}
+        '''
+
+rule gtf2symbol_map:
+    input:
+        '{genome_dir}/gtf/gencode.gtf'
+    output:
+        '{output_dir}/SNP/annotation_file/symbol_map.txt'
+    conda:
+
+    shell:
+        '''awk 'BEGIN{FS=OFS="\t"};$9 ~ /transcript_id/ {print $9}' {input} | \
+            awk 'BEGIN{FS="\"";OFS="\t";print "#name" "\t" "name2"};{print $4 "\t" $8}' | uniq > {output}
+        '''
+
+rule generate_region_annotation:
+    input:
+        bed='{output_dir}/SNP/annotation_file/genconde.bed',
+        symbol='{output_dir}/SNP/annotation_file/symbol_map.txt'
+    output:
+        '{output_dir}/SNP/annotation_file/extracted_3UTR.bed'
+    conda:
+
+    log:
+        '{output_dir}/log/APA/generate_region_annotation/{sample_id}.log'
+    shell:
+        '''DaPars_Extract_Anno.py \
+            -b {input.bed} \
+            -s {input.symbol} \
+            -o {output} \
+            > {log} 2>&1
+        '''
+
+rule bam2bedgraph:
+    input:
+        '{output_dir}/bam_sorted_by_coord/{sample_id}/{map_step}_rmdup.bam'
+    output:
+        '{output_dir}/SNP/{sample_id}/{map_step}_rmdup.bedgraph'
+    conda:
+    
+    shell:
+        '''genomeCoverageBed -bg -ibam {input} -split > {output}
+        '''
+
+
+## 这部分需要进行分组后才能继续分析
+# rule main_apa:
+#     input:
+#         '{APA_config_file}'
+#     shell:
+#         'python `which DaPars_main.py` {input}'

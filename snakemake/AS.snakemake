@@ -1,0 +1,31 @@
+shell.prefix('set -x;')
+include: 'common.snakemake'
+
+## 由于rmats使用的是python2.7的环境，所以额外在desktop中添加了python2.7的conda环境，以下所有工作均在python2.7环境下完成，后续需要在snakemake中天健环境信息
+
+rule all：
+    input：
+
+rule rmats:
+    input:
+        bam_txt_1='',
+        bam_txt_2='',
+        gtf_file=''
+    output:
+        od=''
+    params:
+        read_length=config.get("read_length")
+    conda:
+
+    log:
+        '{output_dir}/log/AS/{sample_id}.log'
+    shell:
+        '''rmats.py  \
+            --b1 {input.bam_txt_1} \
+            --b2 {input.bam_txt_2} \
+            --gtf {input.gtf_file} \
+            --od {output.od} \
+            -t paired \
+            --readLength {params.read_length} \
+            > {log} 2>&1
+        '''

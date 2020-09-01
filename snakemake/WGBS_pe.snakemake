@@ -1,0 +1,147 @@
+include: 'common.snakemake'
+
+root_dir=config.get('root_dir')
+output_dir=config.get('output_dir')
+
+## 以下工作在python2.7环境下运行
+
+rule all:
+    input:
+        expand('{output_dir}/methylation_levels/{sample_id}.wig.gz',output_dir=config.get('output_dir'),sample_id=sample_ids),
+        expand('{output_dir}/methylation_levels/{sample_id}.ATCGmap.gz',output_dir=config.get('output_dir'),sample_id=sample_ids),
+        expand('{output_dir}/methylation_levels/{sample_id}.CGmap.gz',output_dir=config.get('output_dir'),sample_id=sample_ids)
+
+rule build_index:
+    input:
+        fasta=config.get("genome_dir") + '/fasta/genome.fa'
+    output:
+        directory('{output_dir}/genome_index/genome.fa_bowtie2')
+    params:
+        '{output_dir}/genome_index'
+    conda:
+        "envs/WGBS.yaml"
+    log:
+        '{output_dir}/log/WGBS/build_index.log'
+    shell:
+        '''bs_seeker2-build.py \
+            -f {input.fasta} \
+            -d {params} \
+            --aligner=bowtie2 \
+            > {log} 2>&1
+        '''
+
+rule mapping_1st:
+    input:
+        read1=config.get('data_dir') + '/fasta/{sample_id}_1.fasta.gz',
+        read2=config.get('data_dir') + '/fasta/{sample_id}_2.fasta.gz',
+        database=directory('{output_dir}/genome_index/genome.fa_bowtie2')
+    output:
+        PE_bam='{output_dir}/bam_1st/{sample_id}.PE.bam',
+        unmapped_read1='{output_dir}/unmapped/{sample_id}_unmapped_1.fa',
+        unmapped_read2='{output_dir}/unmapped/{sample_id}_unmapped_2.fa'
+    params:
+        fasta=config.get("genome_dir") + '/fasta/genome.fa',
+        unmapped='{output_dir}/unmapped/{sample_id}_unmapped',
+        database = '{output_dir}/genome_index'
+    conda:
+        "envs/WGBS.yaml"
+    log:
+        '{output_dir}/log/WGBS/mapping_1st/{sample_id}.log'
+    shell:
+        '''bs_seeker2-align.py \
+            -1 {input.read1} -2 {input.read2} \
+            -g {params.fasta} \
+            -o {output.PE_bam} \
+            --aligner=bowtie2 \
+            -d {params.database} \
+            -f bam \
+            -u {params.unmapped} \
+            > {log} 2>&1
+        '''
+
+rule mapping_unmapped_1st:
+    input:
+        read1='{output_dir}/unmapped/{sample_id}_unmapped_1.fa'
+    output:
+        bam1='{output_dir}/unmapped/{sample_id}_unmapped_1.bam'
+    params:
+        fasta=config.get("genome_dir") + '/fasta/genome.fa',
+        database = '{output_dir}/genome_index'
+    conda:
+        "envs/WGBS.yaml"
+    log:
+        '{output_dir}/log/WGBS/mapping_unmapped_1st/{sample_id}.log'
+    shell:
+        '''bs_seeker2-align.py \
+            -i {input.read1} \
+            -g {params.fasta} \
+            -o {output.bam1} \
+            --aligner=bowtie2 \
+            -d {params.database} \
+            -f bam \
+            > {log} 2>&1
+        '''
+
+rule mapping_unmapped_2nd:
+    input:
+        read2='{output_dir}/unmapped/{sample_id}_unmapped_2.fa'
+    output:
+        bam2='{output_dir}/unmapped/{sample_id}_unmapped_2.bam'
+    params:
+        read2_anti='{output_dir}/unmapped/{sample_id}_unmapped_2_antisense.fa',
+        fasta=config.get("genome_dir") + '/fasta/genome.fa',
+        database = '{output_dir}/genome_index'
+    conda:
+        "envs/WGBS.yaml"
+    log:
+        '{output_dir}/log/WGBS/mapping_unmapped_1st/{sample_id}.log'
+    shell:
+        '''Antisense.py \
+            -i {input.read2} -o {params.read2_anti};
+           bs_seeker2-align.py \
+            -i {params.read2_anti} \
+            -g {params.fasta} \
+            -o {output.bam2} \
+            --aligner=bowtie2 \
+            -d {params.database} \
+            -f bam \
+            > {log} 2>&1
+        '''
+
+rule merge_all_bam_file:
+    input:
+        PE_bam='{output_dir}/bam_1st/{sample_id}.PE.bam',
+        bam1='{output_dir}/unmapped/{sample_id}_unmapped_1.bam',
+        bam2='{output_dir}/unmapped/{sample_id}_unmapped_2.bam'
+    output:
+        merged_bam='{output_dir}/bam_merged/{sample_id}.bam'
+    conda:
+        "envs/WGBS.yaml"
+    log:
+        '{output_dir}/log/WGBS/merge_all_bam_file/{sample_id}.log'
+    shell:
+        '''samtools merge {output.merged_bam} {input.PE_bam} {input.bam1} {input.bam2} > {log} 2>&1
+        '''
+
+rule call_the_methylation_levels:
+    input:
+        merged_bam='{output_dir}/bam_merged/{sample_id}.bam',
+        database = directory('{output_dir}/genome_index/genome.fa_bowtie2')
+    output:
+        '{output_dir}/methylation_levels/{sample_id}.wig.gz',
+        '{output_dir}/methylation_levels/{sample_id}.ATCGmap.gz',
+        '{output_dir}/methylation_levels/{sample_id}.CGmap.gz'
+    params:
+        output = '{output_dir}/methylation_levels/{sample_id}'
+    conda:
+        "envs/WGBS.yaml"
+    log:
+        '{output_dir}/log/WGBS/call_the_methylation_levels/{sample_id}.log'
+    shell:
+        '''bs_seeker2-call_methylation.py \
+            -x \
+            -i {input.merged_bam} \
+            --db {input.database} \
+            -o {params.output} \
+            > {log} 2>&1
+        '''
