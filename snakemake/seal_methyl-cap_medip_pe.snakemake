@@ -10,6 +10,7 @@ rule all:
     input:
         expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.html',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
         expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/multiQC_summary/multiqc.html',output_dir=output_dir),
         expand('{output_dir}/dedup_bam/{sample_id}_dedup.bam',output_dir=output_dir,sample_id=sample_ids),
         expand('{output_dir}/dedup_bw/{sample_id}_dedup.bw',output_dir=output_dir,sample_id=sample_ids),
         expand('{output_dir}/macs2_callPeak/{sample_id}/',output_dir=output_dir,sample_id=sample_ids)
@@ -27,6 +28,8 @@ rule fastqc_pe:
         mate_index='[12]'
     conda:
         "envs/quality_control.yaml"
+    threads:
+        1
     log:
         '{output_dir}/log/quality_control/fastqc/{sample_id}_{mate_index}.log'
     shell:
@@ -37,19 +40,20 @@ rule fastqc_pe:
 
 rule multiqc_pe:
     input:
-        fastqc=expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',
-            output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2])
+        fastqc=expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2])
     output:
-        html='{output_dir}/multiQC_summary/fastqc.html',
+        html='{output_dir}/multiQC_summary/multiqc.html',
         data=directory('{output_dir}/multiQC_summary/fastqc_data')
     params:
         fastqc_dir='{output_dir}/fastqc'
     wildcard_constraints:
         mate_index='[12]'
     conda:
-        "envs/quality_control.yaml"
+        'envs/seal_methyl-cap_medip.yaml'
+    threads:
+        1
     log:
-        '{output_dir}/log/quality_control/multiqc.log'
+        '{output_dir}/log/multiqc_pe/multiqc.log'
     shell:
         '''multiqc -m fastqc -n {output.html} {params.fastqc_dir} > {log} 2>&1
         '''
@@ -61,7 +65,7 @@ rule bowtie2_mapping:
     output:
         sam_file='{output_dir}/bowtie2_mapping/{sample_id}.sam'
     params:
-        bowtie2_index=config.get('bowtie_bin_dir'),
+        bowtie2_index=config.get('genome_dir') + '/genome_index/bowtie2/genome',
     conda:
         'envs/seal_methyl-cap_medip.yaml'
     threads:
@@ -70,7 +74,7 @@ rule bowtie2_mapping:
         '{output_dir}/log/bowtie2_mapping/{sample_id}.log'
     shell:
         '''
-            bowtie2 -p 30 --end-to-end -q -x {params.bowtie2_index} -1 {input.fastq1} -2 {input.fastq2} -S {output.sam_file} > {log} 2>&1
+            bowtie2 -p {threads} --end-to-end -q -x {params.bowtie2_index} -1 {input.fastq1} -2 {input.fastq2} -S {output.sam_file} > {log} 2>&1
         '''
 
 rule sam_to_bam:
@@ -94,7 +98,7 @@ rule remove_duplicates:
         bam_file='{output_dir}/bowtie2_mapping/{sample_id}.bam'
     output:
         dedup_bam_file='{output_dir}/dedup_bam/{sample_id}_dedup.bam',
-        metrics_picard_file ='{output_dir}/dedup_bam/{prefix}.dedup.txt'
+        metrics_picard_file ='{output_dir}/dedup_bam/{sample_id}.dedup.txt'
     threads:
         1
     conda:
@@ -103,14 +107,31 @@ rule remove_duplicates:
         '{output_dir}/log/dedup_bam/{sample_id}_dedup.log'
     shell:
         '''
-            picard MarkDuplicates INPUT={input.bam_file} OUTPUT={output.dedup_bam_file}] \
-                METRICS_FILE={output. metrics_picard_file} VALIDATION_STRINGENCY=LENIENT  \
-                ASSUME_SORTED=true REMOVE_DUPLICATES=true > {log} 2>&1
+            picard MarkDuplicates -INPUT {input.bam_file} -OUTPUT {output.dedup_bam_file} \
+                -METRICS_FILE {output.metrics_picard_file} \
+                -VALIDATION_STRINGENCY LENIENT -ASSUME_SORTED true -REMOVE_DUPLICATES true > {log} 2>&1
+        '''
+
+rule index_dudup_bam:
+    input:
+        dedup_bam_file='{output_dir}/dedup_bam/{sample_id}_dedup.bam'
+    output:
+        dedup_bam_index='{output_dir}/dedup_bam/{sample_id}_dedup.bam.bai'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/seal_methyl-cap_medip.yaml'
+    log:
+        '{output_dir}/log/index_dudup_bam/{sample_id}.log'
+    shell:
+        '''
+            samtools index -@ {threads} {input.dedup_bam_file} {output.dedup_bam_index} > {log} 2>&1
         '''
 
 rule bam_to_bw:
     input:
         dedup_bam_file='{output_dir}/dedup_bam/{sample_id}_dedup.bam',
+        dedup_bam_index='{output_dir}/dedup_bam/{sample_id}_dedup.bam.bai'
     output:
         dedup_bw_file='{output_dir}/dedup_bw/{sample_id}_dedup.bw',
     threads:
@@ -132,12 +153,12 @@ rule macs2_callPeak:
     params:
         sample_name='{sample_id}'
     threads:
-        config.get('threads_mapping')
+        1
     conda:
         'envs/seal_methyl-cap_medip.yaml'
     log:
-        '{output_dir}/log//.log'
+        '{output_dir}/log/macs2_callPeak/{sample_id}.log'
     shell:
         '''
-            macs2 callpeak -t {input.dedup_bam_file} -g hs --nomodel --extsize 200 -n {params.sample_id} --outdir {output.macs2_out_dir} --call-summits
+            macs2 callpeak -t {input.dedup_bam_file} -g hs --nomodel --extsize 200 -n {params.sample_name} --outdir {output.macs2_out_dir} --call-summits
         ''' 

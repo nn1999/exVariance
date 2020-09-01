@@ -18,7 +18,9 @@ steps = (
     'WGBS',
     'RRBS',
     'ctdna',
-    'wgbs_rrbs'
+    'wgbs_rrbs',
+    'seal_methyl-cap_medip',
+    'mcta'
 )
 
 if __name__ == '__main__':
@@ -47,11 +49,11 @@ if __name__ == '__main__':
     parser.add_argument('step', type=str, choices=steps)
     parser.add_argument('--user_config_file', '-u', type=str, required=True,
                         help='the user config file')
-    ## type: class 'argparse.Namespace' 将parser中设置的所有“add_argument”返回给args子类实例；parser中增加的属性内容都会在args实例中，使用即可。
+    # type: class 'argparse.Namespace' 将parser中设置的所有“add_argument”返回给args子类实例；parser中增加的属性内容都会在args实例中，使用即可。
     args = parser.parse_args()
 
     # set config
-    ## user config
+    # user config
     user_config_file = args.user_config_file
     if not os.path.isfile(user_config_file):
         raise ValueError(
@@ -60,7 +62,7 @@ if __name__ == '__main__':
         logger.info('read user config file: ' + user_config_file)
         with open(user_config_file, 'r') as f:
             user_config = yaml.load(f, Loader=yaml.FullLoader)
-    ## default config
+    # default config
     default_config_file = user_config.get('default_config_file')
     if not os.path.isfile(default_config_file):
         raise ValueError(
@@ -69,15 +71,15 @@ if __name__ == '__main__':
         logger.info('read default config file: {}'.format(default_config_file))
         with open(default_config_file, 'r') as f:
             config = yaml.load(f, Loader=yaml.FullLoader)
-    ## combine default_config and user_config
+    # combine default_config and user_config
     config.update(user_config)    # dictionary
 
     # set snakemake using setp(in args) and config
-    ## set snakemake_path
+    # set snakemake_path
     snakemake_path = shutil.which('snakemake')
     if snakemake_path is None:
         raise ValueError('cannot find snakemake command')
-    ## set snakemake_args (choose steps)
+    # set snakemake_args (choose steps)
     if args.step == 'quality_control':
         if config['paired_end']:
             snakefile = os.path.join(
@@ -179,7 +181,15 @@ if __name__ == '__main__':
         if config['paired_end']:
             snakefile = os.path.join(
                 root_dir, 'snakemake', 'WGBS_RRBS_pe.snakemake')
-    ## logging snakemake command
+    elif args.step == 'seal_methyl-cap_medip':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'seal_methyl-cap_medip_pe.snakemake')
+    elif args.step == 'mcta':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'mcta_pe.snakemake')
+    # logging snakemake command
     snakemake_args = ['-p', '-k', '--use-conda', '-j', '14', '--rerun-incomplete',
                       '--latency-wait', '30', '--snakefile', snakefile, '--configfile', user_config_file]
     logger.debug('snakemake command: ' + str(snakemake_path) +

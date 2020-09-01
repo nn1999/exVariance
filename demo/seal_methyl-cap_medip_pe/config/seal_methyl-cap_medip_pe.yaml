@@ -19,7 +19,7 @@ bowtie_bin_dir: /lulab/lustre2/zhangshang/bin/anaconda3/envs/cfea_tmp/bin/
 
 # general parameters
 threads_compress: 2
-threads_mapping: 4
+threads_mapping: 6
 
 # mapping parameters
 # aligner: STAR
