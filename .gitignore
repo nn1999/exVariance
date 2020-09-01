@@ -1,0 +1,15 @@
+# downloaded snakemake related files
+.snakemake/
+.vscode/
+bin/.snakemake/
+*/.snakemake/
+*/*/.snakemake/
+*/*/*/.snakemake/
+
+# demo related output file
+## long_pe_example
+demo/*/data/
+demo/*/genome/
+demo/*/temp/
+demo/*/output/
+
