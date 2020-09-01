@@ -11,7 +11,7 @@ data_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software
 output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/mcta_pe/output
 temp_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/mcta_pe/temp
 
-bowtie1_bin_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/.snakemake/conda/11f96a98/bin
+bowtie_bin_dir: /lulab/lustre2/zhangshang/bin/anaconda3/envs/cfea_tmp/bin/
 
 # RNAEditor_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/mcta_pe/config/RNAEditor_configure.txt
 

@@ -11,6 +11,7 @@ rule all:
         expand('{output_dir}/trim/{sample_id}/{sample_id}.{mate_index}.clean.fq.gz',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
         expand('{output_dir}/filter/{sample_id}/{sample_id}.{mate_index}.filter.fq.gz',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
         expand('{output_dir}/sorted_bam/{sample_id}.{mate_index}.sorted.bam',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/merge_two_wig/{sample_id}.wig.gz',output_dir=output_dir,sample_id=sample_ids),
 
 rule fastq_gzip:
     input:
@@ -82,11 +83,11 @@ rule bismark_mapping:
         filter_fastq_1='{output_dir}/filter/{sample_id}/{sample_id}.1.filter.fq.gz',
         filter_fastq_2='{output_dir}/filter/{sample_id}/{sample_id}.2.filter.fq.gz'
     output:
-        bam_file1='{output_dir}/bismark_bam/{sample_id}_1/{sample_id}.1.filter_bismark.bam',
-        bam_file2='{output_dir}/bismark_bam/{sample_id}_2/{sample_id}.2.filter_bismark.bam'
+        bam_file1='{output_dir}/bismark_bam/{sample_id}_1/{sample_id}.1.filter_bismark_bt2.bam',
+        bam_file2='{output_dir}/bismark_bam/{sample_id}_2/{sample_id}.2.filter_bismark_bt2.bam'
     params:
         genome=config.get('genome_dir'),
-        bowtie1_bin_dir=config.get('bowtie1_bin_dir'),
+        bowtie2_bin_dir=config.get('bowtie_bin_dir'),
         tmp_dir=config.get('temp_dir'),
         bam1_dir='{output_dir}/bismark_bam/{sample_id}_1',
         bam2_dir='{output_dir}/bismark_bam/{sample_id}_2',
@@ -100,19 +101,19 @@ rule bismark_mapping:
         fastq2_log='{output_dir}/log/bismark_bam/{sample_id}_2.log'
     shell:
         '''
-            bismark --bowtie1 --non_directional --fastq --phred33-quals --temp_dir {params.tmp_dir} \
-                    --path_to_bowtie {params.bowtie1_bin_dir} --output_dir {params.bam1_dir} {params.genome} \
+            bismark --bowtie2 --non_directional --fastq --phred33-quals --temp_dir {params.tmp_dir} \
+                    --path_to_bowtie {params.bowtie2_bin_dir} --output_dir {params.bam1_dir} {params.genome}/WGBS_RRBS/ \
                     {input.filter_fastq_1} > {log.fastq1_log} 2>&1 ; \
-            bismark --bowtie1 --non_directional --fastq --phred33-quals --temp_dir {params.tmp_dir} \
-                    --path_to_bowtie {params.bowtie1_bin_dir} --output_dir {params.bam2_dir} {params.genome} \
+            bismark --bowtie2 --non_directional --fastq --phred33-quals --temp_dir {params.tmp_dir} \
+                    --path_to_bowtie {params.bowtie2_bin_dir} --output_dir {params.bam2_dir} {params.genome}/WGBS_RRBS/ \
                     {input.filter_fastq_2} > {log.fastq2_log} 2>&1 ;
 
         '''
 
-rule bam_sorted:
+rule sorted_bam:
     input:
-        bam_file1='{output_dir}/bismark_bam/{sample_id}_1/{sample_id}.1.filter_bismark.bam',
-        bam_file2='{output_dir}/bismark_bam/{sample_id}_2/{sample_id}.2.filter_bismark.bam'
+        bam_file1='{output_dir}/bismark_bam/{sample_id}_1/{sample_id}.1.filter_bismark_bt2.bam',
+        bam_file2='{output_dir}/bismark_bam/{sample_id}_2/{sample_id}.2.filter_bismark_bt2.bam'
     output:
         sorted1='{output_dir}/sorted_bam/{sample_id}.1.sorted.bam',
         sorted2='{output_dir}/sorted_bam/{sample_id}.2.sorted.bam'
@@ -121,8 +122,8 @@ rule bam_sorted:
     conda:
         'envs/mcta.yaml'
     log:
-        log1='{output_dir}/log/bam_sorted/{sample_id}_1.log',
-        log2='{output_dir}/log/bam_sorted/{sample_id}_2.log'
+        log1='{output_dir}/log/sorted_bam/{sample_id}_1.log',
+        log2='{output_dir}/log/sorted_bam/{sample_id}_2.log'
     shell:
         '''
             samtools sort -@ {threads} {input.bam_file1} -o {output.sorted1} > {log.log1} 2>&1; \
@@ -131,29 +132,40 @@ rule bam_sorted:
             samtools index {output.sorted2}
         '''
 
-# rule bismark_methylation_extract:
-#     input:
-#         sorted1='{output_dir}/sorted_bam/{sample_id}.1.sorted.bam',
-#         sorted2='{output_dir}/sorted_bam/{sample_id}.2.sorted.bam'
-#     output:
-#         coverage_dir=directory('{output_dir}/bismark_methylation_extract')
-#     threads:
-#         config.get('threads_mapping')
-#     conda:
-#         'envs/mcta.yaml'
-#     log:
-#         '{output_dir}/log//.log'
-#     shell:
-#         '''
-#             bismark_methylation_extractor -s {input.sorted1} {input.sorted2} --bedGraph --counts -o {this_sample_out} > {this_log_dir} 2>&1
-#         '''
+rule bismark_methylation_extract:
+    input:
+        sorted1='{output_dir}/sorted_bam/{sample_id}.1.sorted.bam',
+        sorted2='{output_dir}/sorted_bam/{sample_id}.2.sorted.bam'
+    output:
+        bedGraph1='{output_dir}/bismark_methylation_extract/{sample_id}.1.sorted.bedGraph.gz',
+        bedGraph2='{output_dir}/bismark_methylation_extract/{sample_id}.2.sorted.bedGraph.gz',
+        bismark_coverage1='{output_dir}/bismark_methylation_extract/{sample_id}.1.sorted.bismark.cov.gz',
+        bismark_coverage2='{output_dir}/bismark_methylation_extract/{sample_id}.2.sorted.bismark.cov.gz'
+    params:
+        coverage_dir=directory('{output_dir}/bismark_methylation_extract')
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log/bismark_methylation_extract/{sample_id}.log'
+    shell:
+        '''
+            bismark_methylation_extractor --parallel {threads} -s {input.sorted1} {input.sorted2} --bedGraph --counts -o {params.coverage_dir} > {log} 2>&1
+        '''
 
+## 这一步看起来可以省略
 # rule merge_cpg_pos:
 #     input:
-#         coverage_dir='{output_dir}/bismark_methylation_extract'
+#         bedGraph1='{output_dir}/bismark_methylation_extract/{sample_id}.1.sorted.bedGraph.gz',
+#         bedGraph2='{output_dir}/bismark_methylation_extract/{sample_id}.2.sorted.bedGraph.gz',
+#         bismark_coverage1='{output_dir}/bismark_methylation_extract/{sample_id}.1.sorted.bismark.cov.gz',
+#         bismark_coverage2='{output_dir}/bismark_methylation_extract/{sample_id}.2.sorted.bismark.cov.gz'
 #     output:
 
 #     params:
+#         merge_cpg_pos_script=config.get('root_dir') + '/bin/dna_meth/MCTA/merge_cpg_pos.py'
+#         coverage_dir='{output_dir}/bismark_methylation_extract',
 #         genome=config.get('genome_dir')
 #     threads:
 #         config.get('threads_mapping')
@@ -163,44 +175,56 @@ rule bam_sorted:
 #         '{output_dir}/log//.log'
 #     shell:
 #         '''
-#             python3 merge_cpg_pos.py -i {input.coverage_dir} -p {threads} -f {params.genome}/CpGs/hg38_cpgs.txt.gz
+#             python3 {params.merge_cpg_pos_script} -i {params.coverage_dir} -p {threads} -f {params.genome}/CpGs/hg38_cpgs.txt.gz
 #         '''
 
-# rule merge_two_coverage:
-#     input:
-#         coverage_dir='{output_dir}/bismark_methylation_extract'
-#     output:
-#         merged_dir='{output_dir}/merge_two_coverage/{sample_id}'
-#     params:
-#         merge_two_coverage_script=config.get('root_dir') + '/bin/dna_meth/MCTA/merge_two_coverage.py',
+rule merge_two_coverage:
+    input:
+        # bedGraph1='{output_dir}/bismark_methylation_extract/{sample_id}.1.sorted.bedGraph.gz',
+        # bedGraph2='{output_dir}/bismark_methylation_extract/{sample_id}.2.sorted.bedGraph.gz',
+        bismark_coverage1='{output_dir}/bismark_methylation_extract/{sample_id}.1.sorted.bismark.cov.gz',
+        bismark_coverage2='{output_dir}/bismark_methylation_extract/{sample_id}.2.sorted.bismark.cov.gz'
+    output:
+        coverage_file='{output_dir}/merge_two_coverage/{sample_id}.cov'
+    params:
+        merge_two_coverage_script=config.get('root_dir') + '/bin/dna_meth/MCTA/merge_two_coverage.py',
+        merged_dir_tmp='{output_dir}/merge_two_coverage/tmp/',
+        merged_dir='{output_dir}/merge_two_coverage'
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log/merge_two_coverage/{sample_id}.log'
+    shell:
+        '''
+            mkdir {params.merged_dir_tmp}; \
+            cp {input.bismark_coverage1} {input.bismark_coverage2} {params.merged_dir_tmp}; \
+            pigz -d {params.merged_dir_tmp}/*.sorted.bismark.cov.gz ; \
+            python {params.merge_two_coverage_script} -i {params.merged_dir_tmp} -o {params.merged_dir} > {log} 2>&1 ; \
+            # rm -rf {params.merged_dir_tmp};
+        '''
 
-#     threads:
-#         config.get('threads_mapping')
-#     conda:
-#         'envs/mcta.yaml'
-#     log:
-#         '{output_dir}/log//.log'
-#     shell:
-#         '''
-#             python {params.merge_two_coverage_script} -i [merged CpG coverage dir] -o {output.merged_dir}
-#         '''
+rule get_wiggle_file:
+    input:
+        coverage_file='{output_dir}/merge_two_coverage/{sample_id}.cov'
+    output:
+        wig_file='{output_dir}/merge_two_wig/{sample_id}.wig.gz'
+    params:
+        coverage_script=config.get('root_dir') + '/bin/dna_meth/WGBS_RRBS/coverage_to_wig.py',
+        coverage_dir='{output_dir}/merge_two_coverage/',
+        tmp_wig_file='{output_dir}/merge_two_coverage/{sample_id}.wig.gz'
+    wildcard_constraints:
 
-# rule get_wiggle_file:
-#     input:
-
-#     output:
-
-#     params:
-#         coverage_script=config.get('root_dir') + '/bin/dna_meth/WGBS_RRBS/coverage_to_wig.py'
-#     wildcard_constraints:
-
-#     threads:
-#         config.get('threads_mapping')
-#     conda:
-#         'envs/mcta.yaml'
-#     log:
-#         '{output_dir}/log//.log'
-#     shell:
-#         '''
-#             python {params.coverage_script} {params.coverage_dir} > {log.get_wiggle_log} 2>&1
-#         '''
+    threads:
+        config.get('threads_mapping')
+    conda:
+        'envs/mcta.yaml'
+    log:
+        '{output_dir}/log/get_wiggle_file/{sample_id}.log'
+    shell:
+        '''
+            pigz -p {threads} {input.coverage_file}; \
+            python {params.coverage_script} {params.coverage_dir} > {log} 2>&1 ; \
+            mv {params.tmp_wig_file} {output.wig_file}
+        '''

@@ -100,7 +100,7 @@ rule bismark_mapping:
         '{output_dir}/log/bismark_bam/{sample_id}.log'
     shell:
         '''
-            bismark -p 4 {params.genome}/WGBS_RRBS/ --path_to_bowtie {params.bowtie2_bin_dir} --bowtie2 \
+            bismark -p {threads} {params.genome}/WGBS_RRBS/ --path_to_bowtie {params.bowtie2_bin_dir} --bowtie2 \
             -1 {input.trim_fastq1} -2 {input.trim_fastq2} -o {params.bam_dir} --temp_dir {params.tmp_dir} > {log} 2>&1;
             mv {params.bam_file} {output.bam_file}
         '''
