@@ -20,7 +20,8 @@ steps = (
     'ctdna',
     'wgbs_rrbs',
     'seal_methyl-cap_medip',
-    'mcta'
+    'mcta',
+    'dna-seq'
 )
 
 if __name__ == '__main__':
@@ -189,6 +190,10 @@ if __name__ == '__main__':
         if config['paired_end']:
             snakefile = os.path.join(
                 root_dir, 'snakemake', 'mcta_pe.snakemake')
+    elif args.step == 'dna-seq':
+        if config['paired_end']:
+            snakefile = os.path.join(
+                root_dir, 'snakemake', 'DNA-seq_pe.snakemake')
     # logging snakemake command
     snakemake_args = ['-p', '-k', '--use-conda', '-j', '14', '--rerun-incomplete',
                       '--latency-wait', '30', '--snakefile', snakefile, '--configfile', user_config_file]

@@ -6,6 +6,61 @@ root_dir=config.get('root_dir')
 data_dir=config.get('data_dir')
 output_dir=config.get('output_dir')
 
+rule all:
+    input:
+        expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.html',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/multiQC_summary/multiqc.html',output_dir=output_dir),
+        expand('{output_dir}/bwa_map/{sample_id}_{mate_index}.bam',output_dir=output_dir,sample_id=sample_ids,mate_index=[1, 2]),
+        expand('{output_dir}/sorted_bam/{sample_id}.bam',output_dir=output_dir,sample_id=sample_ids),
+        expand('{output_dir}/dedup_bam/{sample_id}_dedup.bam',output_dir=output_dir,sample_id=sample_ids),
+        expand('{output_dir}/peaks/{sample_id}/pooled/{sample_id}.xls',output_dir=output_dir,sample_id=sample_ids),
+        expand('{output_dir}/peaks/{sample_id}/pooled/{sample_id}.wig',output_dir=output_dir,sample_id=sample_ids),
+        expand('{output_dir}/bed/{sample_id}.bed',output_dir=output_dir,sample_id=sample_ids),
+
+rule fastqc_pe:
+    input:
+        auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_{mate_index}.fastq')
+    output:
+        html='{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.html',
+        zip='{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip'
+    params:
+        output_prefix='{output_dir}/fastqc/',
+        temp_dir=config['temp_dir']
+    wildcard_constraints:
+        mate_index='[12]'
+    conda:
+        "envs/quality_control.yaml"
+    threads:
+        1
+    log:
+        '{output_dir}/log/quality_control/fastqc/{sample_id}_{mate_index}.log'
+    shell:
+        '''rm -rf {params.temp_dir};
+            mkdir {params.temp_dir};
+            fastqc -q -o {params.output_prefix} -d {params.temp_dir} {input} > {log} 2>&1
+        '''
+
+rule multiqc_pe:
+    input:
+        fastqc=expand('{output_dir}/fastqc/{sample_id}_{mate_index}_fastqc.zip',output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2])
+    output:
+        html='{output_dir}/multiQC_summary/multiqc.html',
+        data=directory('{output_dir}/multiQC_summary/fastqc_data')
+    params:
+        fastqc_dir='{output_dir}/fastqc'
+    wildcard_constraints:
+        mate_index='[12]'
+    conda:
+        'envs/seal_methyl-cap_medip.yaml'
+    threads:
+        1
+    log:
+        '{output_dir}/log/multiqc_pe/multiqc.log'
+    shell:
+        '''multiqc -m fastqc -n {output.html} {params.fastqc_dir} > {log} 2>&1
+        '''
+
 rule bwa_map1:
     input:
         fastq1=config.get('data_dir') + '/fastq/{sample_id}_1.fastq'
@@ -53,7 +108,7 @@ rule sam:
     params:
         bwa_index=config.get('genome_dir') + '/genome_index/bwa/genome'
     threads:
-        config.get('threads_mapping')
+        config.get('threads_compress')
     conda:
         'envs/dna-seq.yaml'
     log:
@@ -88,7 +143,7 @@ rule dedup:
     params:
         metrics_picard_file=''
     threads:
-        config.get('threads_mapping')
+        config.get('threads_compress')
     conda:
         'envs/dna-seq.yaml'
     log:
@@ -107,20 +162,20 @@ rule call_peak_using_danpos:
         peak_xls='{output_dir}/peaks/{sample_id}/pooled/{sample_id}.xls',
         peak_wig='{output_dir}/peaks/{sample_id}/pooled/{sample_id}.wig'
     threads:
-        config.get('threads_mapping')
+        config.get('threads_compress')
     params:
         peak_file_dir='{output_dir}/peaks/{sample_id}',
         peak_xls_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.positions.xls',
         peak_wig_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.wig'
     conda:
-        'envs/danpos.yaml'
+        'envs/dna-seq.yaml'
     log:
         '{output_dir}/log/call_peak_using_danpos/{sample_id}.log'
     shell:
         '''
             danpos.py dpos {input.dedup_bam} -o {params.peak_file_dir} > {log} 2>&1 ; \
             mv {params.peak_file_dir}/pooled/{params.peak_xls_tmp} {output.peak_xls} ; \
-            mv {params.peak_file_dir}/pooled/{params.peak_wig_tmp} {output.peak_name}
+            mv {params.peak_file_dir}/pooled/{params.peak_wig_tmp} {output.peak_wig}
         '''
 
 rule peak_to_bed:
@@ -136,5 +191,5 @@ rule peak_to_bed:
         '{output_dir}/log/peak_to_bed/{sample_id}.log'
     shell:
         '''
-            wig2bed < {input.pead_wig} > {output.bed_file} > {log} 2>&1
+            wig2bed < {input.peak_wig} > {output.bed_file} > {log} 2>&1
         '''
