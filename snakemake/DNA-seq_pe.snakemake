@@ -165,8 +165,8 @@ rule call_peak_using_danpos:
         config.get('threads_compress')
     params:
         peak_file_dir='{output_dir}/peaks/{sample_id}',
-        peak_xls_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.positions.xls',
-        peak_wig_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.wig'
+        # peak_xls_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.positions.xls',
+        # peak_wig_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.wig'
     conda:
         'envs/dna-seq.yaml'
     log:
@@ -174,8 +174,8 @@ rule call_peak_using_danpos:
     shell:
         '''
             danpos.py dpos {input.dedup_bam} -o {params.peak_file_dir} > {log} 2>&1 ; \
-            mv {params.peak_file_dir}/pooled/{params.peak_xls_tmp} {output.peak_xls} ; \
-            mv {params.peak_file_dir}/pooled/{params.peak_wig_tmp} {output.peak_wig}
+            mv {params.peak_file_dir}/pooled/*_dedup.smooth.positions.xls {output.peak_xls} ; \
+            mv {params.peak_file_dir}/pooled/*_dedup.smooth.wig {output.peak_wig}
         '''
 
 rule peak_to_bed:
