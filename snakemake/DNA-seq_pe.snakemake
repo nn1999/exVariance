@@ -8,35 +8,35 @@ output_dir=config.get('output_dir')
 
 rule bwa_map1:
     input:
-        fastq1=''
+        fastq1=config.get('data_dir') + '/fastq/{sample_id}_1.fastq'
     output:
-        bam1=''
+        bam1='{output_dir}/bwa_map/{sample_id}_1.bam'
     params:
-        bwa_index=''
+        bwa_index=config.get('genome_dir') + '/genome_index/bwa/genome'
     threads:
         config.get('threads_mapping')
     conda:
         'envs/dna-seq.yaml'
     log:
-        '{output_dir}/log/bwa_map1/{sample_id}.log'
+        '{output_dir}/log/bwa_map/{sample_id}_1.log'
     shell:
         '''
-            bwa aln -t {threads} -f {output_bam1} {params.bwa_index} {input.fastq1} > {log} 2>&1
+            bwa aln -t {threads} -f {output.bam1} {params.bwa_index} {input.fastq1} > {log} 2>&1
         '''
 
 rule bwa_map2:
     input:
-        fastq2=''
+        fastq2=config.get('data_dir') + '/fastq/{sample_id}_2.fastq'
     output:
-        bam2=''
+        bam2='{output_dir}/bwa_map/{sample_id}_2.bam'
     params:
-        bwa_index=''
+        bwa_index=config.get('genome_dir') + '/genome_index/bwa/genome'
     threads:
         config.get('threads_mapping')
     conda:
         'envs/dna-seq.yaml'
     log:
-        '{output_dir}/log/bwa_map2/{sample_id}.log'
+        '{output_dir}/log/bwa_map/{sample_id}_2.log'
     shell:
         '''
             bwa aln -t {threads} -f {output.bam2} {params.bwa_index} {input.fastq2} > {log} 2>&1
@@ -44,16 +44,14 @@ rule bwa_map2:
 
 rule sam:
     input:
-        fastq1='',
-        fastq2='',
-        bam1='',
-        bam2=''
+        fastq1=config.get('data_dir') + '/fastq/{sample_id}_1.fastq',
+        fastq2=config.get('data_dir') + '/fastq/{sample_id}_2.fastq',
+        bam1='{output_dir}/bwa_map/{sample_id}_1.bam',
+        bam2='{output_dir}/bwa_map/{sample_id}_2.bam'
     output:
-        sam_file=''
+        sam_file='{output_dir}/sam/{sample_id}.sam'
     params:
-
-    wildcard_constraints:
-
+        bwa_index=config.get('genome_dir') + '/genome_index/bwa/genome'
     threads:
         config.get('threads_mapping')
     conda:
@@ -67,9 +65,9 @@ rule sam:
 
 rule sorted_bam:
     input:
-        sam_file=''
+        sam_file='{output_dir}/sam/{sample_id}.sam'
     output:
-        sorted_bam=''
+        sorted_bam='{output_dir}/sorted_bam/{sample_id}.bam'
     threads:
         config.get('threads_mapping')
     conda:
@@ -78,14 +76,15 @@ rule sorted_bam:
         '{output_dir}/log/sorted_bam/{sample_id}.log'
     shell:
         '''
-            samtools view -h {input.sam_file} | samtools sort -@ 10 -o {output.sorted_bam} > {log} 2>&1
+            samtools view -h {input.sam_file} | samtools sort -@ {threads} -o {output.sorted_bam} > {log} 2>&1
         '''
 
 rule dedup:
     input:
-        sorted_bam=''
+        sorted_bam='{output_dir}/sorted_bam/{sample_id}.bam'
     output:
-        dedup_bam=''
+        dedup_bam='{output_dir}/dedup_bam/{sample_id}_dedup.bam',
+        metrics_picard='{output_dir}/dedup_bam/{sample_id}.dedup.txt'
     params:
         metrics_picard_file=''
     threads:
@@ -93,64 +92,49 @@ rule dedup:
     conda:
         'envs/dna-seq.yaml'
     log:
-        '{output_dir}/log//.log'
+        '{output_dir}/log/dedup_bam/{sample_id}.log'
     shell:
         '''
-            picard MarkDuplicates INPUT={input.sorted_bam} OUTPUT={output.dedup_bam} \
-                METRICS_FILE={params.metrics_picard_file} VALIDATION_STRINGENCY=LENIENT \
-                ASSUME_SORTED=true REMOVE_DUPLICATES=true > {log} 2>&1
+            picard MarkDuplicates -INPUT {input.sorted_bam} -OUTPUT {output.dedup_bam} \
+                -METRICS_FILE {output.metrics_picard} \
+                -VALIDATION_STRINGENCY LENIENT -ASSUME_SORTED true -REMOVE_DUPLICATES true > {log} 2>&1
         '''
 
-rule call_peak_using_danpos
+rule call_peak_using_danpos:
     input:
-        dedup_bam=''
+        dedup_bam='{output_dir}/dedup_bam/{sample_id}_dedup.bam'
     output:
-        peak_file=''
+        peak_xls='{output_dir}/peaks/{sample_id}/pooled/{sample_id}.xls',
+        peak_wig='{output_dir}/peaks/{sample_id}/pooled/{sample_id}.wig'
     threads:
         config.get('threads_mapping')
+    params:
+        peak_file_dir='{output_dir}/peaks/{sample_id}',
+        peak_xls_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.positions.xls',
+        peak_wig_tmp='{output_dir}_dedup_bam_{sample_id}_dedup.smooth.wig'
     conda:
         'envs/danpos.yaml'
     log:
         '{output_dir}/log/call_peak_using_danpos/{sample_id}.log'
     shell:
         '''
-            danpos dpos {input.dedup_bam} -o {output.peak_file} > {log} 2>&1
+            danpos.py dpos {input.dedup_bam} -o {params.peak_file_dir} > {log} 2>&1 ; \
+            mv {params.peak_file_dir}/pooled/{params.peak_xls_tmp} {output.peak_xls} ; \
+            mv {params.peak_file_dir}/pooled/{params.peak_wig_tmp} {output.peak_name}
         '''
 
 rule peak_to_bed:
     input:
-        peak_file=''
+        peak_wig='{output_dir}/peaks/{sample_id}/pooled/{sample_id}.wig'
     output:
-        bed_files_dir=''
-    params:
-        peak_to_bed_script=config.get('root_dir') + '/bin/dna_meth/nucelosome_positioning/peak_to_bed_np.py'
+        bed_file='{output_dir}/bed/{sample_id}.bed'
     threads:
-        config.get('threads_mapping')
+        1
     conda:
         'envs/dna-seq.yaml'
     log:
         '{output_dir}/log/peak_to_bed/{sample_id}.log'
     shell:
         '''
-            python {params.peak_to_bed_script} -i {input.peak_file} -p {threads} -b {output.bed_file_dir} > {log} 2>&1
-        '''
-
-rule :
-    input:
-
-    output:
-
-    params:
-
-    wildcard_constraints:
-
-    threads:
-        config.get('threads_mapping')
-    conda:
-        'envs/dna-seq.yaml'
-    log:
-        '{output_dir}/log//.log'
-    shell:
-        '''
-            
+            wig2bed < {input.pead_wig} > {output.bed_file} > {log} 2>&1
         '''
