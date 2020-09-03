@@ -87,12 +87,17 @@ usage: exVariance [-h] --user_config_file USER_CONFIG_FILE
                   [--singularity SINGULARITY]
                   [--singularity-wrapper-dir SINGULARITY_WRAPPER_DIR]
 
-                  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
+                  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,
+                   count_matrix,normalization,differential_expression,fusion_transcripts,
+                   SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,
+                   mcta,dna-seq}
 
 exVariance is a tool for integrated analysis the liquid biopsy sequencing data.
 
 positional arguments:
-  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
+  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,
+   normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,
+   WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
 
 optional arguments:
   -h, --help            show this help message and exit
