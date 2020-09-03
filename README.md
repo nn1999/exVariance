@@ -79,25 +79,25 @@
 Run `exVariance --help` to get the usage:
 
 ```text
-usage: ./bin/exVariance [-h] --user_config_file USER_CONFIG_FILE
+usage: exVariance [-h] --user_config_file USER_CONFIG_FILE
 
-              [--cluster]
-              [--cluster-config CLUSTER_CONFIG]
-              [--cluster-command CLUSTER_COMMAND]
-              [--singularity SINGULARITY]
-              [--singularity-wrapper-dir SINGULARITY_WRAPPER_DIR]
+                  [--cluster]
+                  [--cluster-config CLUSTER_CONFIG]
+                  [--cluster-command CLUSTER_COMMAND]
+                  [--singularity SINGULARITY]
+                  [--singularity-wrapper-dir SINGULARITY_WRAPPER_DIR]
 
-              {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,
-              differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna}
+                  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
 
-exVariance is a Integrated Analysis Tool for Liquid Biopsy Sequencing Data.
+exVariance is a tool for integrated analysis the liquid biopsy sequencing data.
+
+positional arguments:
+  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
 
 optional arguments:
   -h, --help            show this help message and exit
   --user_config_file USER_CONFIG_FILE, -u USER_CONFIG_FILE
-                        the user config file.
-                        (<data_name>/config/<data_name>.yaml
-                        for example)
+                        the user config file
 
   --cluster             submit to cluster
   --cluster-config CLUSTER_CONFIG
@@ -113,8 +113,10 @@ optional arguments:
 
 
 positional arguments:
-  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,
-  differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna}
+  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
+
+For additional help or support, please visit https://github.com/ShangZhang/exVariance
+
 ```
 
 ### Input files
@@ -122,17 +124,17 @@ positional arguments:
 Several examples can be found in `demo` directory with the following structure:
 
 ```text
-./demo/*/
-|-- config
-|   |-- default_config.yaml
-|   `-- example.yaml
-|-- data
-|   |-- fastq
-|   `-- sample_ids.txt
-|-- genome
-|   `-- fasta
-|-- output
-`-- tmp
+    ./demo/*/
+    |-- config
+    |   |-- default_config.yaml
+    |   `-- example.yaml
+    |-- data
+    |   |-- fastq
+    |   `-- sample_ids.txt
+    |-- genome
+    |   `-- fasta
+    |-- output
+    `-- tmp
 ```
 
 > **Note:**

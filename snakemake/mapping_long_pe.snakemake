@@ -1,3 +1,12 @@
+# vim: syntax=python tabstop=4 expandtab
+# coding: utf-8
+
+#---------------------------
+# @author: Shang Zhang
+# @email: shang_zhang@foxmail.com
+# @date: Sep, 3rd, 2020
+#---------------------------
+
 include: 'common.snakemake'
 
 star_map_steps = ['rRNA', 'genome', 'circRNA']
@@ -104,20 +113,20 @@ rule map_rRNA_pe:
     log:
         '{output_dir}/log/mapping/rRNA/{sample_id}.log'
     shell:
-        '''STAR --genomeDir {params.index} \
-            --readFilesIn {input.reads1} {input.reads2} \
-            --runThreadN {threads} \
-            --outFileNamePrefix {params.output_prefix} \
-            --outSAMtype BAM Unsorted \
-            --outReadsUnmapped Fastx \
-            --readFilesCommand pigz -p {threads} -d -c \
-            --outSAMmultNmax 1 \
-            --seedPerWindowNmax {params.seedPerWindowNmax}
-        mv {params.output_prefix}Aligned.out.bam {output.bam}
-        cp {output.log} {log}
-        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
-        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
-        rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
+        ''' STAR --genomeDir {params.index} \
+                --readFilesIn {input.reads1} {input.reads2} \
+                --runThreadN {threads} \
+                --outFileNamePrefix {params.output_prefix} \
+                --outSAMtype BAM Unsorted \
+                --outReadsUnmapped Fastx \
+                --readFilesCommand pigz -p {threads} -d -c \
+                --outSAMmultNmax 1 \
+                --seedPerWindowNmax {params.seedPerWindowNmax}
+            && mv {params.output_prefix}Aligned.out.bam {output.bam}
+            && cp {output.log} {log}
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+            && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
 rule map_genome_pe_1st:
@@ -139,16 +148,16 @@ rule map_genome_pe_1st:
     log:
         '{output_dir}/log/mapping/genome_1st/{sample_id}.log'
     shell:
-        '''STAR --genomeDir {params.index} \
-            --readFilesIn {input.reads1} {input.reads2} \
-            --runThreadN {threads} \
-            --outFileNamePrefix {params.output_prefix} \
-            --outSAMtype BAM Unsorted \
-            --readFilesCommand pigz -p {threads} -d -c \
-            --outSAMmultNmax 1 \
-            --seedPerWindowNmax {params.seedPerWindowNmax} ; \
-        mv {params.output_prefix}Aligned.out.bam {output.bam}
-        cp {output.log} {log}
+        ''' STAR --genomeDir {params.index} \
+                --readFilesIn {input.reads1} {input.reads2} \
+                --runThreadN {threads} \
+                --outFileNamePrefix {params.output_prefix} \
+                --outSAMtype BAM Unsorted \
+                --readFilesCommand pigz -p {threads} -d -c \
+                --outSAMmultNmax 1 \
+                --seedPerWindowNmax {params.seedPerWindowNmax} ; \
+            && mv {params.output_prefix}Aligned.out.bam {output.bam}
+            && cp {output.log} {log}
         '''
 
 rule map_genome_pe_2nd:
@@ -171,29 +180,29 @@ rule map_genome_pe_2nd:
     log:
         '{output_dir}/log/mapping/genome_2nd/{sample_id}.log'
     shell:
-        '''STAR --genomeDir {params.index} \
-            --readFilesIn {input.reads1} {input.reads2} \
-            --runThreadN {threads} \
-            --outFileNamePrefix {params.output_prefix} \
-            --outSAMtype BAM Unsorted \
-            --outReadsUnmapped Fastx \
-            --readFilesCommand pigz -p {threads} -d -c \
-            --outSAMmultNmax 1 \
-            --sjdbFileChrStartEnd {input.sjdbFileChrStartEnd} \
-            --seedPerWindowNmax {params.seedPerWindowNmax} \
-            \
-            --chimSegmentMin 12 \
-            --chimJunctionOverhangMin 12 \
-            --alignSJDBoverhangMin 10 \
-            --alignMatesGapMax 100000 \
-            --alignIntronMax 100000 \
-            --alignSJstitchMismatchNmax 5 -1 5 5 \
-            --outSAMattrRGline ID:GRPundef \
-            --chimScoreJunctionNonGTAG -4 \
-            --limitSjdbInsertNsj=5000000
-        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
-        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
-        rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
+        ''' STAR --genomeDir {params.index} \
+                --readFilesIn {input.reads1} {input.reads2} \
+                --runThreadN {threads} \
+                --outFileNamePrefix {params.output_prefix} \
+                --outSAMtype BAM Unsorted \
+                --outReadsUnmapped Fastx \
+                --readFilesCommand pigz -p {threads} -d -c \
+                --outSAMmultNmax 1 \
+                --sjdbFileChrStartEnd {input.sjdbFileChrStartEnd} \
+                --seedPerWindowNmax {params.seedPerWindowNmax} \
+                \
+                --chimSegmentMin 12 \
+                --chimJunctionOverhangMin 12 \
+                --alignSJDBoverhangMin 10 \
+                --alignMatesGapMax 100000 \
+                --alignIntronMax 100000 \
+                --alignSJstitchMismatchNmax 5 -1 5 5 \
+                --outSAMattrRGline ID:GRPundef \
+                --chimScoreJunctionNonGTAG -4 \
+                --limitSjdbInsertNsj=5000000
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+            && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
 rule map_circRNA_pe:
@@ -216,20 +225,20 @@ rule map_circRNA_pe:
     log:
         '{output_dir}/log/mapping/circRNA/{sample_id}.log'
     shell:
-        '''STAR --genomeDir {params.index} \
-            --readFilesIn {input.reads1} {input.reads2} \
-            --runThreadN {threads} \
-            --outFileNamePrefix {params.output_prefix} \
-            --outSAMtype BAM Unsorted \
-            --outReadsUnmapped Fastx \
-            --readFilesCommand pigz -p {threads} -d -c \
-            --outSAMmultNmax 1 \
-            --seedPerWindowNmax {params.seedPerWindowNmax}
-        mv {params.output_prefix}Aligned.out.bam {output.bam}
-        cp {output.log} {log}
-        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
-        pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
-        rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
+        ''' STAR --genomeDir {params.index} \
+                --readFilesIn {input.reads1} {input.reads2} \
+                --runThreadN {threads} \
+                --outFileNamePrefix {params.output_prefix} \
+                --outSAMtype BAM Unsorted \
+                --outReadsUnmapped Fastx \
+                --readFilesCommand pigz -p {threads} -d -c \
+                --outSAMmultNmax 1 \
+                --seedPerWindowNmax {params.seedPerWindowNmax}
+            && mv {params.output_prefix}Aligned.out.bam {output.bam}
+            && cp {output.log} {log}
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+            && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
 rule sort_bam_by_name:
@@ -256,12 +265,12 @@ rule remove_duplicates:
     wildcard_constraints:
         map_step='(rRNA)|(genome)|(circRNA)'
     shell:
-        '''picard MarkDuplicates REMOVE_DUPLICATES=true \
-            ASSUME_SORT_ORDER=queryname \
-            I={input.bam} \
-            O={output.bam} \
-            M={output.metrics} \
-            READ_NAME_REGEX=null
+        ''' picard MarkDuplicates REMOVE_DUPLICATES=true \
+                ASSUME_SORT_ORDER=queryname \
+                I={input.bam} \
+                O={output.bam} \
+                M={output.metrics} \
+                READ_NAME_REGEX=null
         '''
 
 rule samtools_stats:

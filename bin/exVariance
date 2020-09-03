@@ -1,6 +1,16 @@
 #! /lulab/lustre2/zhangshang/bin/anaconda3/bin/python
 # -*-coding:UTF-8-*-
 
+# vim: syntax=python tabstop=4 expandtab
+# coding: utf-8
+
+# ---------------------------
+# @author: Shang Zhang
+# @email: shang_zhang@foxmail.com
+# @date: Sep, 3rd, 2020
+# ---------------------------
+
+
 steps = (
     'quality_control',
     'cutadapt',
@@ -46,7 +56,7 @@ if __name__ == '__main__':
 
     # set args
     parser = argparse.ArgumentParser(description='exVariance is a tool for integrated analysis the liquid biopsy sequencing data.',
-                                     epilog='For additional help or support, please visit https://')
+                                     epilog='For additional help or support, please visit https://github.com/ShangZhang/exVariance')
     parser.add_argument('step', type=str, choices=steps)
     parser.add_argument('--user_config_file', '-u', type=str, required=True,
                         help='the user config file')
