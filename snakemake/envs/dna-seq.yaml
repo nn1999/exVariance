@@ -1,4 +1,10 @@
+name: dna-seq
 channels:
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/bioconda/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/cloud/conda-forge/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
+  - https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
+  - defaults
   - bioconda
   - conda-forge
 dependencies:
@@ -7,3 +13,4 @@ dependencies:
   - picard
   - samtools=1.6
   - bedops=2.4.39
+show_channel_urls: true
