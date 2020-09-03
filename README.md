@@ -7,19 +7,18 @@
 ---
 
 <p align="left">
-<a href="https://github.com/ShangZhang/exVariance">
+<!-- <a href="https://github.com/ShangZhang/exVariance">
     <img alt="exVariance GitHub Pipenv locked Python version" src="https://img.shields.io/github/pipenv/locked/python-version/ShangZhang/exVariance?style=flat"></a>
 <a href="https://github.com/ShangZhang/exVariance">
     <img alt="exVariance Docker Build Status" src="https://img.shields.io/docker/build/ShangZhang/exVariance?style=flat"></a>
 <a href="https://github.com/ShangZhang/exVariance">
-    <img alt="exVariance GitHub release (latest by date)" src="https://img.shields.io/github/v/release/ShangZhang/exVariance?style=flat"></a>
+    <img alt="exVariance GitHub release (latest by date)" src="https://img.shields.io/github/v/release/ShangZhang/exVariance?style=flat"></a> -->
 <a href="https://github.com/ShangZhang/exVariance">
     <img alt="exVariance GitHub forks" src="https://img.shields.io/github/forks/ShangZhang/exVariance?style=flat"></a>
 <a href="https://github.com/ShangZhang/exVariance">
     <img alt="exVariance GitHub stars" src="https://img.shields.io/github/stars/ShangZhang/exVariance?style=flat"></a>
 </p>
 
----
 
 ## Table of Contents:
 
@@ -193,6 +192,18 @@ exVariance -u <USER_CONFIG_FILE> RNA_editing    ## for RNA editing analysis, the
 exVariance -u <USER_CONFIG_FILE> AS
 exVariance -u <USER_CONFIG_FILE> APA
 ```
+
+## System Requirements:
+
+Some of the tools that exVariance uses, e.g. STAR is very memory intensive programs.  Therefore we recommend the following system requirements for exVariance:
+
+#### Minimal system requirements:
+We recommend that you run exVariance on a server that has at least 30GB of ram.  This will allow for a single-threaded exVariance run (on human samples).
+
+#### Recommended system requirements:
+We recommend that you have at least 64GB of ram and at least a 4-core CPU if you want to run exVariance in multi-threaded mode (which will speedup the workflow significantly).  
+
+Our own servers have 64GB of ram and 16 cores.
 
 ## Copyright and License Information
 
