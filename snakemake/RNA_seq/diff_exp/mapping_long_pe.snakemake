@@ -16,39 +16,29 @@ if config.get('remove_duplicates_long'):
 
 root_dir=config.get("root_dir")
 
-def get_all_inputs(wildcards):
-    available_inputs = dict(
-        unmapped=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, mate_index=[1,2]),
-        map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
-        map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
-        summarize_read_length=expand('{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',
-            output_dir=config.get("output_dir"), sample_id=sample_ids),
-        summarize_insert_size=expand('{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',
-            output_dir=config.get("output_dir"), sample_id=sample_ids),
-        # plot_bam=expand('{output_dir}/samtools_stats/{sample_id}/plot/{map_step}.html',
-        #     output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
-        count_clean_fragments=expand('{output_dir}/stats/fragment_counts/{sample_id}/clean',
-            output_dir=config.get("output_dir"), sample_id=sample_ids),
-        count_clean_reads_counts=expand('{output_dir}/stats/read_counts_clean/{sample_id}',
-            output_dir=config.get("output_dir"), sample_id=sample_ids),
-        summary_mapping_star=expand('{output_dir}/summary/mapping_star.txt',
-            output_dir=config.get("output_dir"))
-        # summarize_mapping_star=expand('{output_dir}/summary/mapping_star.html',
-        #     output_dir=config.get("output_dir"))
-    )
-    enabled_inputs = list(available_inputs.keys())
-    inputs = []
-    for key, l in available_inputs.items():
-        if key in enabled_inputs:
-            inputs += l
-    return inputs
+# def get_all_inputs(wildcards):
+#     available_inputs = dict(
+#         # output section
+#         unmapped=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',output_dir=config.get("output_dir"), sample_id=sample_ids, mate_index=[1,2]),
+#         map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
+#         map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
+#         # summary section
+#         summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir),
+#         summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir),
+#         summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
+#     )
+#     enabled_inputs = list(available_inputs.keys())
+#     inputs = []
+#     for key, l in available_inputs.items():
+#         if key in enabled_inputs:
+#             inputs += l
+#     return inputs
 
-rule all:
-    input:
-        get_all_inputs
+# rule all:
+#     input:
+#         get_all_inputs
+
+###------------------------The output section---------------------------###
 
 rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文件夹中
     input:
@@ -298,7 +288,7 @@ rule samtools_stats:
 #             plot-bamstats -p {params.out_file}  {output.txt}
 #         '''
 
-## 以下是以下是对以上结果的解释和统计
+## 以下是对以上结果的解释和统计
 
 rule parse_samtools_stats_pe:
     input:
@@ -389,12 +379,30 @@ rule summarize_mapping_star:
         summary.index.name = 'sample_id'
         summary.to_csv(output[0], sep='\t', header=True, na_rep='NA', index=True)
 
-rule summarize_fragment_counts_jupyter:
+# rule summarize_fragment_counts_jupyter:
+#     input:
+#         summary='{output_dir}/summary/mapping_star.txt',
+#         jupyter=config.get("root_dir") + '/templates/summarize_mapping_star.ipynb'
+#     output:
+#         jupyter='{output_dir}/summary/mapping_star.ipynb',
+#         html='{output_dir}/summary/mapping_star.html'
+#     run:
+#         shell(nbconvert_command)
+
+
+###------------------------The summary section---------------------------###
+
+rule summary_mapping_pe:
     input:
-        summary='{output_dir}/summary/mapping_star.txt',
-        jupyter=config.get("root_dir") + '/templates/summarize_mapping_star.ipynb'
+        mapped_read_length_by_sample='{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',
+        mapped_insert_size_by_sample='{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',
+        mapping_star='{output_dir}/summary/mapping_star.txt'
     output:
-        jupyter='{output_dir}/summary/mapping_star.ipynb',
-        html='{output_dir}/summary/mapping_star.html'
-    run:
-        shell(nbconvert_command)
+        summary_mapped_read_length_by_sample='{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',
+        summary_mapped_insert_size_by_sample='{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',
+        summary_alignment_stat='{summary_dir}/alignment/alignment_stat.txt'
+    shell:
+        ''' cp {input.mapped_read_length_by_sample} {output.summary_mapped_read_length_by_sample} ;
+            cp {input.mapped_insert_size_by_sample} {output.summary_mapped_insert_size_by_sample} ;
+            cp {input.mapping_star} {output.summary_alignment_stat} ;
+        '''

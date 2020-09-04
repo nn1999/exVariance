@@ -3,17 +3,20 @@ include: 'common.snakemake'
 output_dir = config.get("output_dir")
 summary_dir = config.get('summary_dir')
 
-
-###------------------------The output section---------------------------###
-
 def get_all_inputs(wildcards):
     available_inputs = dict(
+        # output section
         fastqc_raw_html=expand('{output_dir}/fastqc_raw/{sample_id}_{mate_index}.html', output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2]),
         fastqc_raw_zip=expand('{output_dir}/fastqc_raw/{sample_id}_{mate_index}.zip', output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2]),
         multiqc_raw_html=expand('{output_dir}/multiqc_raw/multiqc_raw.html', output_dir=output_dir),
         afterQC=expand('{output_dir}/afterQC/{sample_id}_{mate_index}.fastq.gz',output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2]),
         fastqc_clean_html=expand('{output_dir}/fastqc_clean/{sample_id}_{mate_index}_fastqc.zip',output_dir=output_dir, sample_id=sample_ids, mate_index=[1, 2]),
-        multiqc_clean_html=expand('{output_dir}/multiqc_clean/fastqc_clean.html', output_dir=output_dir)
+        multiqc_clean_html=expand('{output_dir}/multiqc_clean/fastqc_clean.html', output_dir=output_dir),
+        # summary section
+        summary_multiqc_raw_pe_html=expand('{summary_dir}/quality_control_raw/quality_control_raw.html',summary_dir=summary_dir),
+        summary_multiqc_raw_pe_txt=expand('{summary_dir}/fastq_raw_stat/fastq_raw_stat.txt',summary_dir=summary_dir),
+        summary_multiqc_clean_pe_html=expand('{summary_dir}/quality_control_clean/quality_control_clean.html',summary_dir=summary_dir),
+        summary_multiqc_clean_pe_data=expand('{summary_dir}/fastq_clean_stat/fastq_clean_stat.txt',summary_dir=summary_dir)
     )
     enabled_inputs = list(available_inputs.keys())
     inputs = []
@@ -25,6 +28,8 @@ def get_all_inputs(wildcards):
 rule all:
     input:
         get_all_inputs
+
+###------------------------The output section---------------------------###
     
 rule fastqc_raw_pe:
     input:
@@ -168,13 +173,13 @@ rule summary_pre_process_pe:
         multiqc_clean_pe_html='{output_dir}/multiqc_clean/fastqc_clean.html',
         multiqc_clean_pe_data='{output_dir}/multiqc_clean/fastqc_clean_data/multiqc_fastqc.txt'
     output:
-        multiqc_raw_pe_html='{summary_dir}/quality_control_raw/quality_control_raw.html',
-        multiqc_raw_pe_txt='{summary_dir}/fastq_raw_stat/fastq_raw_stat.txt',
-        multiqc_clean_pe_html='{summary_dir}/quality_control_clean/quality_control_clean.html',
-        multiqc_clean_pe_data='{summary_dir}/fastq_clean_stat/fastq_clean_stat.txt'
+        summary_multiqc_raw_pe_html='{summary_dir}/quality_control_raw/quality_control_raw.html',
+        summary_multiqc_raw_pe_txt='{summary_dir}/fastq_raw_stat/fastq_raw_stat.txt',
+        summary_multiqc_clean_pe_html='{summary_dir}/quality_control_clean/quality_control_clean.html',
+        summary_multiqc_clean_pe_data='{summary_dir}/fastq_clean_stat/fastq_clean_stat.txt'
     shell:
-        ''' cp {input.multiqc_raw_pe_html} {output.multiqc_raw_pe_html} ;
-            cp {input.multiqc_raw_pe_txt} {output.multiqc_raw_pe_txt} ;
-            cp {input.multiqc_clean_pe_html} {output.multiqc_clean_pe_html} ;
-            cp {input.multiqc_clean_pe_data} {output.multiqc_clean_pe_data}
+        ''' cp {input.multiqc_raw_pe_html} {output.summary_multiqc_raw_pe_html} ;
+            cp {input.multiqc_raw_pe_txt} {output.summary_multiqc_raw_pe_txt} ;
+            cp {input.multiqc_clean_pe_html} {output.summary_multiqc_clean_pe_html} ;
+            cp {input.multiqc_clean_pe_data} {output.summary_multiqc_clean_pe_data}
         '''
