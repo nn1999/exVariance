@@ -1,3 +1,12 @@
+# vim: syntax=python tabstop=4 expandtab
+# coding: utf-8
+
+#---------------------------
+# @author: Shang Zhang
+# @email: shang_zhang@foxmail.com
+# @date: Sep, 3rd, 2020
+#---------------------------
+
 include: 'common.snakemake'
 
 import re
@@ -40,6 +49,8 @@ def get_all_inputs(wildcards):
 rule all:
     input:
         get_all_inputs
+
+###------------------------The output section---------------------------###
 
 rule sort_bam_by_coord:
     input:

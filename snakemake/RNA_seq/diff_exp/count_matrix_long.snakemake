@@ -1,3 +1,12 @@
+# vim: syntax=python tabstop=4 expandtab
+# coding: utf-8
+
+#---------------------------
+# @author: Shang Zhang
+# @email: shang_zhang@foxmail.com
+# @date: Sep, 3rd, 2020
+#---------------------------
+
 include: 'common.snakemake'
 
 map_steps = ['genome', 'rRNA', 'circRNA']
@@ -18,6 +27,8 @@ rule all:
             output_dir=output_dir, sample_id=sample_ids),
         # summarize_read_counts_jupyter=expand('{output_dir}/summary/read_counts.html',
         #     output_dir=output_dir)
+
+###------------------------The output section---------------------------###
 
 rule featurecounts:
     input:
