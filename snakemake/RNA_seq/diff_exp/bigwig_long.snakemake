@@ -7,48 +7,6 @@
 # @date: Sep, 3rd, 2020
 #---------------------------
 
-include: 'common.snakemake'
-
-import re
-
-if config['remove_duplicates_long']:
-    map_steps = ['genome_rmdup', 'circRNA_rmdup', 'rRNA_rmdup']
-else:
-    map_steps = ['genome', 'circRNA', 'rRNA']
-
-bin_dir=config.get('bin_dir')
-root_dir=config.get('root_dir')
-
-def get_all_inputs(wildcards):
-    available_inputs = dict()
-    for map_step in map_steps:
-        if map_step.startswith('genome'):
-            strands = ['+', '-']
-        else:
-            strands = '+'
-        available_inputs[map_step] = expand('{output_dir}/bigwig/{sample_id}.{map_step}.{strand}.bigWig',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_step, strand=strands)
-        available_inputs[map_step + '_normalized'] = expand('{output_dir}/bigwig_normalized/{sample_id}.{map_step}.{strand}.bigWig',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_step, strand=strands)
-        available_inputs[map_step + '_bam'] = expand('{output_dir}/bam_sorted_by_coord/{sample_id}/{map_step}.bam',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_step)
-        available_inputs[map_step + '_bai'] = expand('{output_dir}/bam_sorted_by_coord/{sample_id}/{map_step}.bam.bai',
-            output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_step)
-        if map_step.startswith('circRNA'):
-            available_inputs[map_step + '_bigwig_pseudo_genome'] = expand('{output_dir}/bigwig_pseudo_genome/{sample_id}.{map_step}.{strand}.bigWig',
-                output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_step, strand=strands)
-            available_inputs[map_step + '_bam_pseudo_genome'] = expand('{output_dir}/bam_pseudo_genome/{sample_id}/{map_step}.bam',
-                output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_step)
-    enabled_inputs = list(available_inputs.keys())
-    inputs = []
-    for key, l in available_inputs.items():
-        if key in enabled_inputs:
-            inputs += l
-    return inputs
-
-rule all:
-    input:
-        get_all_inputs
 
 ###------------------------The output section---------------------------###
 
@@ -60,7 +18,7 @@ rule sort_bam_by_coord:
     params:
         temp_dir=config.get('temp_dir')
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/sort_bam_by_coord/{sample_id}_{map_step}.log'
     shell:
@@ -73,7 +31,7 @@ rule index_bam_by_coord:
     output:
         '{output_dir}/bam_sorted_by_coord/{sample_id}/{map_step}.bam.bai'
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/index_bam_by_coord/{sample_id}_{map_step}.log'
     shell:
@@ -92,7 +50,7 @@ rule genomecov:
     wildcard_constraints:
         strand='[+-]'
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     shell:
         '''bedtools genomecov -strand {wildcards.strand} -bg {params.pc} -split -ibam {input} \
             | LC_COLLATE=C sort -T {params.temp_dir} -k1,1 -k2,2n > {output}
@@ -106,7 +64,7 @@ rule bedgraph_to_bigwig:
     output:
         '{output_dir}/bigwig/{sample_id}.{map_step}.{strand}.bigWig'
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/bedgraph_to_bigwig/{sample_id}_{map_step}_{strand}.log'
     shell:
@@ -124,7 +82,7 @@ rule normalize_bigwig:
     wildcard_constraints:
         strand='[+-]'
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     shell:
         r'''read_depth=`bamtools count -in {input.bam}`
         bigWigToBedGraph {input.bigwig} stdout \
@@ -143,7 +101,7 @@ rule map_bigwig_to_pseudo_genome:
         bigwig='{output_dir}/bigwig_pseudo_genome/{sample_id}.{map_step}.{strand}.bigWig',
         bedgraph=temp('{output_dir}/bigwig_pseudo_genome/{sample_id}.{map_step}.{strand}.bedGraph')
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     wildcard_constraints:
         map_step='(circRNA)|(circRNA_rmdup)'
     shell:
@@ -165,7 +123,7 @@ rule map_bam_to_pseudo_genome_1_2:
     wildcard_constraints:
         map_step='(circRNA)|(circRNA_rmdup)'
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/map_bam_to_pseudo_genome_1_2/{sample_id}_{map_step}.log'
     shell:
@@ -183,7 +141,7 @@ rule map_bam_to_pseudo_genome_2_2:
     wildcard_constraints:
         map_step='(circRNA)|(circRNA_rmdup)'
     conda:
-        "envs/bigwig.yaml"
+        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/map_bam_to_pseudo_genome_2_2/{sample_id}_{map_step}.log'
     shell:

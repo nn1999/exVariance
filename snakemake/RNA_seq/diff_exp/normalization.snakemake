@@ -1,44 +1,15 @@
-shell.prefix('set -x;')
-include: 'common.snakemake'
+# vim: syntax=python tabstop=4 expandtab
+# coding: utf-8
 
-import re
-
-
-
-config['normalization_methods'] = ["TMM", "RLE", "CPM", "CPM_top"]
-# Batch effect removal methods to try (set "null" to skip batch effect removal)
-config['batch_removal_methods'] = ["null", "RUV", "RUVn"]
-# if has_batch_info:
-#     config['batch_removal_methods'] += ['ComBat', 'limma']
-config['imputation_methods'] = ['null']
-
-def get_all_inputs(wildcards):
-    available_inputs = []
-    for batch_removal_method in config['batch_removal_methods']:
-        template = '{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt'
-        available_inputs += expand(template,
-            output_dir=config.get('output_dir'),
-            imputation_method=config['imputation_methods'],
-            normalization_method=config['normalization_methods'],
-            batch_removal_method=batch_removal_method,
-            batch_index=config.get('batch_index'),
-            count_method=config.get('count_method'))
-        template = '{output_dir}/matrix_processing/filter.{count_method}.txt'
-        available_inputs += expand(template,
-            output_dir=config.get('output_dir'),
-            count_method=config.get('count_method'))
-    #available_inputs += expand('{output_dir}/select_preprocess_method/{score}/{count_method}/selected_methods.txt',
-    #    output_dir=output_dir, score=clustering_scores, count_method=config['count_method'])
-    
-    return available_inputs
+#---------------------------
+# @author: Shang Zhang
+# @email: shang_zhang@foxmail.com
+# @date: Sep, 3rd, 2020
+#---------------------------
 
 
-rule all:
-    input:
-        get_all_inputs
 
-root_dir=config.get('root_dir')
-bin_dir=config.get('bin_dir')
+###------------------------The output section---------------------------###
 
 rule filter_step:
     input:

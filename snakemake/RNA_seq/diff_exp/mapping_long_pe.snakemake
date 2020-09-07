@@ -7,37 +7,6 @@
 # @date: Sep, 3rd, 2020
 #---------------------------
 
-include: 'common.snakemake'
-
-star_map_steps = ['rRNA', 'genome', 'circRNA']
-map_steps = list(star_map_steps)
-if config.get('remove_duplicates_long'):
-    map_steps += ['genome_rmdup', 'circRNA_rmdup', 'rRNA_rmdup']
-
-root_dir=config.get("root_dir")
-
-def get_all_inputs(wildcards):
-    available_inputs = dict(
-        # output section
-        unmapped=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',output_dir=config.get("output_dir"), sample_id=sample_ids, mate_index=[1,2]),
-        map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
-        map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',output_dir=config.get("output_dir"), sample_id=sample_ids, map_step=map_steps),
-        # summary section
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir),
-        summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
-    )
-    enabled_inputs = list(available_inputs.keys())
-    inputs = []
-    for key, l in available_inputs.items():
-        if key in enabled_inputs:
-            inputs += l
-    return inputs
-
-rule all:
-    input:
-        get_all_inputs
-
 ###------------------------The output section---------------------------###
 
 rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文件夹中
@@ -50,7 +19,7 @@ rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文�
     threads: 
         config.get('threads_compress')
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     shell:
         r'''{root_dir}/bin/auto_uncompress {input} \
             | awk 'NR%4==1{{printf "@%012d\n", int(NR/4);next}} NR%4==3{{printf "+\n";next}} {{print}}' \
@@ -65,7 +34,7 @@ rule count_clean_reads_paired:
     threads:
         config.get('threads_compress')
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     shell:
         '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output}
         '''
@@ -78,7 +47,7 @@ rule count_clean_fragments:
     threads:
         config.get('threads_compress')
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     shell:
         '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output}
         '''
@@ -99,7 +68,7 @@ rule map_rRNA_pe:
     threads:
         config.get('threads_mapping')
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     log:
         '{output_dir}/log/mapping/rRNA/{sample_id}.log'
     shell:
@@ -132,7 +101,7 @@ rule map_genome_pe_1st:
         index=config.get("genome_dir") + '/long_index/star',
         seedPerWindowNmax=50
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     threads:
         config.get('threads_mapping')
     log:
@@ -166,7 +135,7 @@ rule map_genome_pe_2nd:
     threads:
         config.get('threads_mapping')
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     log:
         '{output_dir}/log/mapping/genome_2nd/{sample_id}.log'
     shell:
@@ -211,7 +180,7 @@ rule map_circRNA_pe:
     threads:
         config.get('threads_mapping')
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     log:
         '{output_dir}/log/mapping/circRNA/{sample_id}.log'
     shell:
@@ -237,7 +206,7 @@ rule sort_bam_by_name:
     output:
         '{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam'
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     params:
         temp_dir=config.get('temp_dir')
     shell:
@@ -251,7 +220,7 @@ rule remove_duplicates:
         bam='{output_dir}/bam/{sample_id}/{map_step}_rmdup.bam',
         metrics='{output_dir}/log/mapping/{map_step}_rmdup/{sample_id}.log'
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     wildcard_constraints:
         map_step='(rRNA)|(genome)|(circRNA)'
     shell:
@@ -269,7 +238,7 @@ rule samtools_stats:
     output:
         txt='{output_dir}/samtools_stats/{sample_id}/{map_step}.txt'
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     shell:
         '''samtools stats {input} > {output.txt}
         '''
@@ -299,7 +268,7 @@ rule parse_samtools_stats_pe:
         insert_size_hist='{output_dir}/stats/insert_size_hist/{sample_id}/{map_step}',
         read_length_hist='{output_dir}/stats/read_length_hist/{sample_id}/{map_step}'
     conda:
-        "envs/mapping.yaml"
+        "config.get('root_dir')/snakemake/envs/mapping.yaml"
     wildcard_constraints:
         map_step='(?!clean).*'
     shell:
