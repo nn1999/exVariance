@@ -92,7 +92,7 @@ if __name__ == '__main__':
     if args.step == 'RNA_seq_pre_process':
         if config['paired_end']:
             snakefile = os.path.join(
-                root_dir, 'snakemake/RNA_seq', 'quality_control_pe.snakemake')
+                root_dir, 'snakemake/RNA_seq', 'pre_process_pe.snakemake')
     elif args.step == 'RNA_seq_diff_exp':
         if config['paired_ed']:
             snakefile = os.path.join(
@@ -153,7 +153,7 @@ if __name__ == '__main__':
 
     # logging snakemake command
     snakemake_args = ['-p', '-k', '--use-conda', '-j', '14', '--rerun-incomplete',
-                      '--latency-wait', '60', '--snakefile', snakefile, '--configfile', user_config_file]
+                      '--latency-wait', '10', '--snakefile', snakefile, '--configfile', user_config_file]
     logger.debug('snakemake command: ' + str(snakemake_path) +
                  ' ' + str(snakemake_args))
 

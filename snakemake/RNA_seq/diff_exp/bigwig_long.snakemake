@@ -18,7 +18,7 @@ rule sort_bam_by_coord:
     params:
         temp_dir=config.get('temp_dir')
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/sort_bam_by_coord/{sample_id}_{map_step}.log'
     shell:
@@ -31,7 +31,7 @@ rule index_bam_by_coord:
     output:
         '{output_dir}/bam_sorted_by_coord/{sample_id}/{map_step}.bam.bai'
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/index_bam_by_coord/{sample_id}_{map_step}.log'
     shell:
@@ -50,7 +50,7 @@ rule genomecov:
     wildcard_constraints:
         strand='[+-]'
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     shell:
         '''bedtools genomecov -strand {wildcards.strand} -bg {params.pc} -split -ibam {input} \
             | LC_COLLATE=C sort -T {params.temp_dir} -k1,1 -k2,2n > {output}
@@ -64,7 +64,7 @@ rule bedgraph_to_bigwig:
     output:
         '{output_dir}/bigwig/{sample_id}.{map_step}.{strand}.bigWig'
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/bedgraph_to_bigwig/{sample_id}_{map_step}_{strand}.log'
     shell:
@@ -82,7 +82,7 @@ rule normalize_bigwig:
     wildcard_constraints:
         strand='[+-]'
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     shell:
         r'''read_depth=`bamtools count -in {input.bam}`
         bigWigToBedGraph {input.bigwig} stdout \
@@ -101,7 +101,7 @@ rule map_bigwig_to_pseudo_genome:
         bigwig='{output_dir}/bigwig_pseudo_genome/{sample_id}.{map_step}.{strand}.bigWig',
         bedgraph=temp('{output_dir}/bigwig_pseudo_genome/{sample_id}.{map_step}.{strand}.bedGraph')
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     wildcard_constraints:
         map_step='(circRNA)|(circRNA_rmdup)'
     shell:
@@ -123,7 +123,7 @@ rule map_bam_to_pseudo_genome_1_2:
     wildcard_constraints:
         map_step='(circRNA)|(circRNA_rmdup)'
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/map_bam_to_pseudo_genome_1_2/{sample_id}_{map_step}.log'
     shell:
@@ -141,7 +141,7 @@ rule map_bam_to_pseudo_genome_2_2:
     wildcard_constraints:
         map_step='(circRNA)|(circRNA_rmdup)'
     conda:
-        "config.get('root_dir')/snakemake/envs/bigwig.yaml"
+        "../../envs/bigwig.yaml"
     log:
         '{output_dir}/log/bigwig/map_bam_to_pseudo_genome_2_2/{sample_id}_{map_step}.log'
     shell:
