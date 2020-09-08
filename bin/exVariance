@@ -94,7 +94,7 @@ if __name__ == '__main__':
             snakefile = os.path.join(
                 root_dir, 'snakemake/RNA_seq', 'pre_process_pe.snakemake')
     elif args.step == 'RNA_seq_diff_exp':
-        if config['paired_ed']:
+        if config['paired_end']:
             snakefile = os.path.join(
                 root_dir, 'snakemake/RNA_seq', 'diff_exp.snakemake')
     elif args.step == 'RNA_seq_fusion_transcripts':

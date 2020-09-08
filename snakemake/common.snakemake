@@ -38,3 +38,11 @@ def auto_gzip_input(template):
         return original_names
         
     return get_filename
+
+
+sub_matrix_regex = '(mirna_only)'
+count_method_regex = '(featurecounts)|(htseq)|(domains_combined)|(transcript)|(transcript_long)|(mirna_and_domains)|(mirna_and_domains_rna)|(transcript_mirna)|(featurecounts_mrna)|(featurecounts_lncrna)'
+imputation_method_regex = '(scimpute_count)|(viper_count)|(null)'
+normalization_method_regex = '(SCnorm)|(TMM)|(RLE)|(CPM)|(CPM_top)|(CPM_rm)|(CPM_refer)|(UQ)|(null)'
+batch_removal_method_with_batchinfo_regex = '(ComBat)|(limma)'
+batch_removal_method_without_batchinfo_regex = '(RUV)|(RUVn)|(null)'

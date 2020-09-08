@@ -7,6 +7,11 @@
 # @date: Sep, 3rd, 2020
 #---------------------------
 
+star_map_steps = ['rRNA', 'genome', 'circRNA']
+map_steps = list(star_map_steps)
+if config['remove_duplicates_long']:
+    map_steps += ['genome_rmdup', 'circRNA_rmdup', 'rRNA_rmdup']
+
 ###------------------------The output section---------------------------###
 
 rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文件夹中
@@ -363,13 +368,13 @@ rule summarize_mapping_star:
 
 rule summary_mapping_pe:
     input:
-        mapped_read_length_by_sample='{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',
-        mapped_insert_size_by_sample='{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',
-        mapping_star='{output_dir}/summary/mapping_star.txt'
+        mapped_read_length_by_sample= expand('{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
+        mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
+        mapping_star=expand('{output_dir}/summary/mapping_star.txt',output_dir=output_dir)
     output:
-        summary_mapped_read_length_by_sample='{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',
-        summary_mapped_insert_size_by_sample='{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',
-        summary_alignment_stat='{summary_dir}/alignment/alignment_stat.txt'
+        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
     shell:
         ''' cp {input.mapped_read_length_by_sample} {output.summary_mapped_read_length_by_sample} ;
             cp {input.mapped_insert_size_by_sample} {output.summary_mapped_insert_size_by_sample} ;

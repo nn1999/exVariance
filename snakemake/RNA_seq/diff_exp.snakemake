@@ -12,21 +12,20 @@ include: '../common.snakemake'
 bin_dir=config.get('bin_dir')
 root_dir=config.get("root_dir")
 
-count_method=config.get('count_method')
-remove_duplicates_long=config.get('remove_duplicates_long')
-
 output_dir=config.get('output_dir')
 summary_dir=config.get('summary_dir')
 
+count_method=config.get('count_method')
+remove_duplicates_long=config.get('remove_duplicates_long')
+
 ## mapping step
 if config.get('remove_duplicates_long'):
-    map_steps += ['rRNA_rmdup', 'genome_rmdup', 'circRNA_rmdup']
+    map_steps = ['rRNA', 'genome', 'circRNA', 'rRNA_rmdup', 'genome_rmdup', 'circRNA_rmdup']
 else:
     map_steps = ['genome', 'rRNA', 'circRNA']
 
 ## normalization step
 config['normalization_methods'] = ["TMM", "RLE", "CPM", "CPM_top"]
-# Batch effect removal methods to try (set "null" to skip batch effect removal)
 config['batch_removal_methods'] = ["null", "RUV", "RUVn"]
 # if has_batch_info:
 #     config['batch_removal_methods'] += ['ComBat', 'limma']
@@ -36,7 +35,6 @@ config['imputation_methods'] = ['null']
 with open(config.get('data_dir') + '/compare_groups.yaml', 'r') as f:
     compare_groups = yaml.load(f, Loader=yaml.FullLoader)
 
-
 def get_all_inputs(wildcards):
     available_inputs = dict(
         # mapping long pe # output section
@@ -44,8 +42,8 @@ def get_all_inputs(wildcards):
         map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         # mapping long pe # summary section
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir),
+        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
         summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
     )
 
@@ -63,20 +61,6 @@ def get_all_inputs(wildcards):
             available_inputs[map_step + '_bigwig_pseudo_genome'] = expand('{output_dir}/bigwig_pseudo_genome/{sample_id}.{map_step}.{strand}.bigWig', output_dir=output_dir, sample_id=sample_ids, map_step=map_step, strand=strands)
             available_inputs[map_step + '_bam_pseudo_genome'] = expand('{output_dir}/bam_pseudo_genome/{sample_id}/{map_step}.bam', output_dir=output_dir, sample_id=sample_ids, map_step=map_step)
     
-    for batch_removal_method in config['batch_removal_methods']:
-        template = '{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt'
-        available_inputs += expand(template,
-            output_dir=config.get('output_dir'),
-            imputation_method=config['imputation_methods'],
-            normalization_method=config['normalization_methods'],
-            batch_removal_method=batch_removal_method,
-            batch_index=config.get('batch_index'),
-            count_method=config.get('count_method'))
-        template = '{output_dir}/matrix_processing/filter.{count_method}.txt'
-        available_inputs += expand(template,
-            output_dir=config.get('output_dir'),
-            count_method=config.get('count_method'))
-
     enabled_inputs = list(available_inputs.keys())
     inputs = []
     for key, l in available_inputs.items():
@@ -85,9 +69,22 @@ def get_all_inputs(wildcards):
     return inputs
 
     inputs += expand('{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt', output_dir=output_dir, count_method=config['count_method'], compare_group=compare_groups, diffexp_method=config['diffexp_method'])
-
     inputs += expand('{output_dir}/count_matrix/{count_method}.txt',output_dir=output_dir, count_method=config['count_method']),
     inputs += expand('{output_dir}/summary/read_counts.txt',output_dir=output_dir, sample_id=sample_ids),
+
+    for batch_removal_method in config['batch_removal_methods']:
+        inputs += expand('{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt',
+            output_dir=config.get('output_dir'),
+            imputation_method=config['imputation_methods'],
+            normalization_method=config['normalization_methods'],
+            batch_removal_method=batch_removal_method,
+            batch_index=config.get('batch_index'),
+            count_method=config.get('count_method'))
+        inputs += expand('{output_dir}/matrix_processing/filter.{count_method}.txt',
+            output_dir=config.get('output_dir'),
+            count_method=config.get('count_method'))
+    
+    print(inouts)
 
     # if has_batch_info:
     #     inputs += expand('{output_dir}/differential_expression_with_batch/{batch_index}/{count_method}/{compare_group}/{diffexp_method}.txt',
@@ -95,7 +92,7 @@ def get_all_inputs(wildcards):
 
 rule all:
     input:
-        get_all_inputs,
+        get_all_inputs
         
 
 include: './diff_exp/mapping_long_pe.snakemake'
@@ -103,6 +100,3 @@ include: './diff_exp/bigwig_long.snakemake'
 include: './diff_exp/count_matrix_long.snakemake'
 include: './diff_exp/normalization.snakemake'
 include: './diff_exp/differential_expression.snakemake'
-
-#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-

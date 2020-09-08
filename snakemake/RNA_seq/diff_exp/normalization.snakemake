@@ -7,7 +7,7 @@
 # @date: Sep, 3rd, 2020
 #---------------------------
 
-
+# imputation_method_regex = '(scimpute_count)|(viper_count)|(null)'
 
 ###------------------------The output section---------------------------###
 

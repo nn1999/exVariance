@@ -8,7 +8,10 @@
 #---------------------------
 
 
+# count_method_regex = '(featurecounts)|(htseq)'
+
 ###------------------------The output section---------------------------###
+
 
 rule featurecounts:
     input:
