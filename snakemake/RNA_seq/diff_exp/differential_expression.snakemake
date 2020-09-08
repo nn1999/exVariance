@@ -18,8 +18,10 @@ rule differential_expression:
     output:
         '{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt'
     params:
-        positive_class=lambda wildcards: compare_groups[wildcards.compare_group][1],
-        negative_class=lambda wildcards: compare_groups[wildcards.compare_group][0]
+        # positive_class=lambda wildcards: compare_groups[wildcards.compare_group][1],
+        # negative_class=lambda wildcards: compare_groups[wildcards.compare_group][0]
+        positive_class=compare_groups[1],
+        negative_class=compare_groups[0]
     shell:
         '''{bin_dir}/differential_expression.R \
             -i {input.matrix} --classes {input.classes} \

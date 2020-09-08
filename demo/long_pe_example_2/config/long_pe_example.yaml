@@ -17,8 +17,8 @@ RNAEditor_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvari
 APA_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/long_pe_example_2/config/dapars_configure.txt
 
 # general parameters
-threads_compress: 4
-threads_mapping: 6
+threads_compress: 1
+threads_mapping: 8
 
 # mapping parameters
 aligner: STAR

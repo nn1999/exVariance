@@ -134,7 +134,7 @@ rule map_bam_to_pseudo_genome_1_2:
 
 rule map_bam_to_pseudo_genome_2_2:
     input:
-        unsorted_bam=temp('{output_dir}/bam_pseudo_genome/{sample_id}/{map_step}.unsorted.bam'),
+        unsorted_bam='{output_dir}/bam_pseudo_genome/{sample_id}/{map_step}.unsorted.bam',
     output:
         bam='{output_dir}/bam_pseudo_genome/{sample_id}/{map_step}.bam',
         bai='{output_dir}/bam_pseudo_genome/{sample_id}/{map_step}.bam.bai'

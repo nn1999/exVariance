@@ -18,7 +18,7 @@ rule filter_step:
     output:
         matrix='{output_dir}/matrix_processing/filter.{count_method}.txt'
     threads:
-        config.get('threads')
+        config.get('threads_compress')
     wildcard_constraints:
         count_method=count_method_regex
     run:
@@ -44,7 +44,7 @@ rule imputation_step:
     output:
         matrix='{output_dir}/matrix_processing/filter.{imputation_method}.{count_method}.txt',
     threads:
-        config.get('threads')
+        config.get('threads_compress')
     params:
         imputecluster=5,
         temp_dir='{output_dir}/matrix_processing/filter.{imputation_method}.{count_method}.tmp'
@@ -69,7 +69,7 @@ rule normalization_step:
     output:
         matrix='{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.{count_method}.txt'
     threads:
-        config.get('threads')
+        config.get('threads_compress')
     wildcard_constraints:
         normalization_method=normalization_method_regex,
         count_method=count_method_regex
@@ -115,7 +115,7 @@ rule batch_removal_step_with_batchinfo:
     output:
         matrix='{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt'
     threads:
-        config.get('threads')
+        config.get('threads_compress')
     wildcard_constraints:
         batch_removal_method=batch_removal_method_with_batchinfo_regex
     shell:
@@ -136,7 +136,7 @@ rule batch_removal_step_without_batchinfo:
     output:
         matrix='{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt'
     threads:
-        config.get('threads')
+        config.get('threads_compress')
     wildcard_constraints:
         batch_removal_method=batch_removal_method_without_batchinfo_regex
     shell:

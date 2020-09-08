@@ -36,6 +36,8 @@ with open(config.get('data_dir') + '/compare_groups.yaml', 'r') as f:
     compare_groups = yaml.load(f, Loader=yaml.FullLoader)
 
 def get_all_inputs(wildcards):
+
+    # mapping_long_pe.snakemake
     available_inputs = dict(
         # mapping long pe # output section
         unmapped=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',output_dir=output_dir, sample_id=sample_ids, mate_index=[1,2]),
@@ -47,7 +49,7 @@ def get_all_inputs(wildcards):
         summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
     )
 
-    # bigwig_long_snakemake
+    # bigwig_long.snakemake
     for map_step in map_steps:
         if map_step.startswith('genome'):
             strands = ['+', '-']
@@ -66,25 +68,30 @@ def get_all_inputs(wildcards):
     for key, l in available_inputs.items():
         if key in enabled_inputs:
             inputs += l
-    return inputs
+    
+    
 
-    inputs += expand('{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt', output_dir=output_dir, count_method=config['count_method'], compare_group=compare_groups, diffexp_method=config['diffexp_method'])
-    inputs += expand('{output_dir}/count_matrix/{count_method}.txt',output_dir=output_dir, count_method=config['count_method']),
-    inputs += expand('{output_dir}/summary/read_counts.txt',output_dir=output_dir, sample_id=sample_ids),
 
+    # normalization.snakemake
     for batch_removal_method in config['batch_removal_methods']:
-        inputs += expand('{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt',
+        inputs.extend(expand('{output_dir}/matrix_processing/filter.{imputation_method}.Norm_{normalization_method}.Batch_{batch_removal_method}_{batch_index}.{count_method}.txt',
             output_dir=config.get('output_dir'),
             imputation_method=config['imputation_methods'],
             normalization_method=config['normalization_methods'],
             batch_removal_method=batch_removal_method,
             batch_index=config.get('batch_index'),
-            count_method=config.get('count_method'))
-        inputs += expand('{output_dir}/matrix_processing/filter.{count_method}.txt',
+            count_method=config.get('count_method')))
+        inputs.extend(expand('{output_dir}/matrix_processing/filter.{count_method}.txt',
             output_dir=config.get('output_dir'),
-            count_method=config.get('count_method'))
+            count_method=config.get('count_method')))
+
     
-    print(inouts)
+    # differential_expression.snakemake
+    inputs.extend(expand('{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt', output_dir=output_dir, count_method=config.get('count_method'), compare_group=compare_groups, diffexp_method=config.get('diffexp_method')))
+    inputs.extend(expand('{output_dir}/count_matrix/{count_method}.txt',output_dir=output_dir, count_method=config.get('count_method')))
+    inputs.extend(expand('{output_dir}/summary/read_counts.txt',output_dir=output_dir, sample_id=sample_ids))
+
+    return inputs
 
     # if has_batch_info:
     #     inputs += expand('{output_dir}/differential_expression_with_batch/{batch_index}/{count_method}/{compare_group}/{diffexp_method}.txt',

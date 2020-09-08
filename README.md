@@ -205,7 +205,7 @@ exVariance -u <USER_CONFIG_FILE> APA
 Some of the tools that exVariance uses, e.g. STAR is very memory intensive programs.  Therefore we recommend the following system requirements for exVariance:
 
 #### Minimal system requirements:
-We recommend that you run exVariance on a server that has at least 30GB of ram.  This will allow for a single-threaded exVariance run (on human samples).
+We recommend that you run exVariance on a server that has at least 48GB of ram.  This will allow for a single-threaded exVariance run (on human samples).
 
 #### Recommended system requirements:
 We recommend that you have at least 64GB of ram and at least a 4-core CPU if you want to run exVariance in multi-threaded mode (which will speedup the workflow significantly).  

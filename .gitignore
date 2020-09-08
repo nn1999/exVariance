@@ -5,6 +5,7 @@ bin/.snakemake/
 */.snakemake/
 */*/.snakemake/
 */*/*/.snakemake/
+bin/__pycache__
 
 # demo related output file
 ## long_pe_example

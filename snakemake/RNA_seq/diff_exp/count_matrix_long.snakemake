@@ -68,7 +68,8 @@ rule count_circRNA:
     params:
         paired_end={True: '-p', False: ''}[config.get('paired_end')],
         strandness=config.get('strandness'),
-        min_mapping_quality=config.get('min_mapping_quality')
+        min_mapping_quality=config.get('min_mapping_quality'),
+        count_reads_script=config.get('root_dir') + '/bin/count_reads_zs_app.py'
     wildcard_constraints:
         map_step='circRNA.*'
     conda:
@@ -76,7 +77,7 @@ rule count_circRNA:
     log:
         '{output_dir}/log/count_matrix/count_circRNA/{sample_id}_{map_step}.log'
     shell:
-        '''count_reads_zs_app.py count_circrna -s {params.strandness} \
+        '''{params.count_reads_script} count_circrna -s {params.strandness} \
             -q {params.min_mapping_quality} {params.paired_end} \
             -i {input} -o {output} > {log} 2>&1
         '''

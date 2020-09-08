@@ -25,10 +25,12 @@ rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文�
         config.get('threads_compress')
     conda:
         "../../envs/mapping.yaml"
+    log:
+        '{output_dir}/log/rename_fastq/{sample_id}_clean_{mate_index}.log'
     shell:
         r'''{root_dir}/bin/auto_uncompress {input} \
             | awk 'NR%4==1{{printf "@%012d\n", int(NR/4);next}} NR%4==3{{printf "+\n";next}} {{print}}' \
-            | pigz -c -p {threads} > {output}
+            | pigz -c -p {threads} > {output} 2> {log}
         '''
         
 rule count_clean_reads_paired:
@@ -40,8 +42,10 @@ rule count_clean_reads_paired:
         config.get('threads_compress')
     conda:
         "../../envs/mapping.yaml"
+    log:
+        '{output_dir}/log/count_clean_reads/{sample_id}.log'
     shell:
-        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output}
+        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output} 2> {log}
         '''
 
 rule count_clean_fragments:
@@ -53,8 +57,10 @@ rule count_clean_fragments:
         config.get('threads_compress')
     conda:
         "../../envs/mapping.yaml"
+    log:
+        '{output_dir}/log/count_clean_fragments/{sample_id}.log'
     shell:
-        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output}
+        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output} 2> {log}
         '''
 
 rule map_rRNA_pe:
@@ -85,11 +91,11 @@ rule map_rRNA_pe:
                 --outReadsUnmapped Fastx \
                 --readFilesCommand pigz -p {threads} -d -c \
                 --outSAMmultNmax 1 \
-                --seedPerWindowNmax {params.seedPerWindowNmax}
-            && mv {params.output_prefix}Aligned.out.bam {output.bam}
-            && cp {output.log} {log}
-            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
-            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+                --seedPerWindowNmax {params.seedPerWindowNmax} \
+            && mv {params.output_prefix}Aligned.out.bam {output.bam} \
+            && cp {output.log} {log} \
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1} \
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2} \
             && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
@@ -119,8 +125,8 @@ rule map_genome_pe_1st:
                 --outSAMtype BAM Unsorted \
                 --readFilesCommand pigz -p {threads} -d -c \
                 --outSAMmultNmax 1 \
-                --seedPerWindowNmax {params.seedPerWindowNmax} ; \
-            && mv {params.output_prefix}Aligned.out.bam {output.bam}
+                --seedPerWindowNmax {params.seedPerWindowNmax} \
+            && mv {params.output_prefix}Aligned.out.bam {output.bam} \
             && cp {output.log} {log}
         '''
 
@@ -163,9 +169,9 @@ rule map_genome_pe_2nd:
                 --alignSJstitchMismatchNmax 5 -1 5 5 \
                 --outSAMattrRGline ID:GRPundef \
                 --chimScoreJunctionNonGTAG -4 \
-                --limitSjdbInsertNsj=5000000
-            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
-            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+                --limitSjdbInsertNsj=5000000 \
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1} \
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2} \
             && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
@@ -197,11 +203,11 @@ rule map_circRNA_pe:
                 --outReadsUnmapped Fastx \
                 --readFilesCommand pigz -p {threads} -d -c \
                 --outSAMmultNmax 1 \
-                --seedPerWindowNmax {params.seedPerWindowNmax}
-            && mv {params.output_prefix}Aligned.out.bam {output.bam}
-            && cp {output.log} {log}
-            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1}
-            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2}
+                --seedPerWindowNmax {params.seedPerWindowNmax} \
+            && mv {params.output_prefix}Aligned.out.bam {output.bam} \
+            && cp {output.log} {log} \
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate1 > {output.unmapped1} \
+            && pigz -p {threads} -c {params.output_prefix}Unmapped.out.mate2 > {output.unmapped2} \
             && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
@@ -214,8 +220,10 @@ rule sort_bam_by_name:
         "../../envs/mapping.yaml"
     params:
         temp_dir=config.get('temp_dir')
+    log:
+        '{output_dir}/log/sort_bam_by_name/{sample_id}_{map_step}.log'
     shell:
-        '''samtools sort -n -T {params.temp_dir} -o {output} {input}
+        '''samtools sort -n -T {params.temp_dir} -o {output} {input} > {log} 2>&1
         '''
 
 rule remove_duplicates:
@@ -228,13 +236,15 @@ rule remove_duplicates:
         "../../envs/mapping.yaml"
     wildcard_constraints:
         map_step='(rRNA)|(genome)|(circRNA)'
+    log:
+        '{output_dir}/log/remove_duplicates/{sample_id}_{map_step}.log'
     shell:
         ''' picard MarkDuplicates REMOVE_DUPLICATES=true \
                 ASSUME_SORT_ORDER=queryname \
                 I={input.bam} \
                 O={output.bam} \
                 M={output.metrics} \
-                READ_NAME_REGEX=null
+                READ_NAME_REGEX=null > {log} 2>&1
         '''
 
 rule samtools_stats:
@@ -244,8 +254,10 @@ rule samtools_stats:
         txt='{output_dir}/samtools_stats/{sample_id}/{map_step}.txt'
     conda:
         "../../envs/mapping.yaml"
+    log:
+        '{output_dir}/log/samtools_stats/{sample_id}_{map_step}.log'
     shell:
-        '''samtools stats {input} > {output.txt}
+        '''samtools stats {input} > {output.txt} 2>&1
         '''
 
 ## 这部分暂时不要
@@ -277,10 +289,10 @@ rule parse_samtools_stats_pe:
     wildcard_constraints:
         map_step='(?!clean).*'
     shell:
-        ''' awk 'BEGIN{{OFS="\t";FS="\t"}}/^SN/{{if($2 == "reads mapped and paired:") print int($3/2)}}' {input} > {output.fragment_counts}
-            awk 'BEGIN{{OFS="\t";FS="\t"}}/^SN/{{if($2 == "insert size average:") print $3}}' {input} > {output.insert_size_average}
-            awk 'BEGIN{{OFS="\t";FS="\t"}}/^IS/{{print $2,$3}}' {input} > {output.insert_size_hist}
-            awk 'BEGIN{{OFS="\t";FS="\t"}}/^RL/{{print $2,$3}}' {input} > {output.read_length_hist}
+        ''' awk 'BEGIN{{OFS="\t";FS="\t"}}/^SN/{{if($2 == "reads mapped and paired:") print int($3/2)}}' {input} > {output.fragment_counts} ;
+            awk 'BEGIN{{OFS="\t";FS="\t"}}/^SN/{{if($2 == "insert size average:") print $3}}' {input} > {output.insert_size_average} ;
+            awk 'BEGIN{{OFS="\t";FS="\t"}}/^IS/{{print $2,$3}}' {input} > {output.insert_size_hist} ;
+            awk 'BEGIN{{OFS="\t";FS="\t"}}/^RL/{{print $2,$3}}' {input} > {output.read_length_hist} ;
         '''
 
 rule summarize_read_length:
