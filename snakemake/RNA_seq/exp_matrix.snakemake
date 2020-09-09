@@ -44,9 +44,9 @@ def get_all_inputs(wildcards):
         map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         # mapping long pe # summary section
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
+        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
     )
 
     # bigwig_long.snakemake
@@ -68,9 +68,7 @@ def get_all_inputs(wildcards):
     for key, l in available_inputs.items():
         if key in enabled_inputs:
             inputs += l
-    
-    
-
+            
 
     # normalization.snakemake
     for batch_removal_method in config['batch_removal_methods']:
@@ -86,12 +84,14 @@ def get_all_inputs(wildcards):
             count_method=config.get('count_method')))
 
     
-    # differential_expression.snakemake
-    inputs.extend(expand('{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt', output_dir=output_dir, count_method=config.get('count_method'), compare_group=compare_groups, diffexp_method=config.get('diffexp_method')))
-    inputs.extend(expand('{output_dir}/count_matrix/{count_method}.txt',output_dir=output_dir, count_method=config.get('count_method')))
-    inputs.extend(expand('{output_dir}/summary/read_counts.txt',output_dir=output_dir, sample_id=sample_ids))
+    # # differential_expression.snakemake
+    # inputs.extend(expand('{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt', output_dir=output_dir, count_method=config.get('count_method'), compare_group=compare_groups, diffexp_method=config.get('diffexp_method')))
+    # inputs.extend(expand('{output_dir}/count_matrix/{count_method}.txt',output_dir=output_dir, count_method=config.get('count_method')))
+    # inputs.extend(expand('{output_dir}/summary/read_counts.txt',output_dir=output_dir, sample_id=sample_ids))
 
     return inputs
+
+# include: './diff_exp/differential_expression.snakemake'
 
     # if has_batch_info:
     #     inputs += expand('{output_dir}/differential_expression_with_batch/{batch_index}/{count_method}/{compare_group}/{diffexp_method}.txt',
@@ -106,4 +106,3 @@ include: './diff_exp/mapping_long_pe.snakemake'
 include: './diff_exp/bigwig_long.snakemake'
 include: './diff_exp/count_matrix_long.snakemake'
 include: './diff_exp/normalization.snakemake'
-include: './diff_exp/differential_expression.snakemake'

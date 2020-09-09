@@ -77,9 +77,11 @@ rule map_rRNA_pe:
         index=config.get("genome_dir") + '/index/star/rRNA',
         seedPerWindowNmax=20
     threads:
-        config.get('threads_mapping')
+        workflow.cores * 0.75
+    # resources:
+    #     mem_mb=20480
     conda:
-        "../../envs/mapping.yaml"
+        "../../envs/star2_5_3a.yaml"
     log:
         '{output_dir}/log/mapping/rRNA/{sample_id}.log'
     shell:
@@ -112,9 +114,11 @@ rule map_genome_pe_1st:
         index=config.get("genome_dir") + '/long_index/star',
         seedPerWindowNmax=50
     conda:
-        "../../envs/mapping.yaml"
+        "../../envs/star2_5_3a.yaml"
     threads:
-        config.get('threads_mapping')
+        workflow.cores * 0.75
+    # resources:
+    #     mem_mb=32768
     log:
         '{output_dir}/log/mapping/genome_1st/{sample_id}.log'
     shell:
@@ -144,9 +148,11 @@ rule map_genome_pe_2nd:
         index=config.get("genome_dir") + '/long_index/star',
         seedPerWindowNmax=50
     threads:
-        config.get('threads_mapping')
+        workflow.cores * 0.75
+    # resources:
+    #     mem_mb=46080
     conda:
-        "../../envs/mapping.yaml"
+        "../../envs/star2_5_3a.yaml"
     log:
         '{output_dir}/log/mapping/genome_2nd/{sample_id}.log'
     shell:
@@ -191,7 +197,7 @@ rule map_circRNA_pe:
     threads:
         config.get('threads_mapping')
     conda:
-        "../../envs/mapping.yaml"
+        "../../envs/star2_5_3a.yaml"
     log:
         '{output_dir}/log/mapping/circRNA/{sample_id}.log'
     shell:
@@ -384,11 +390,18 @@ rule summary_mapping_pe:
         mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
         mapping_star=expand('{output_dir}/summary/mapping_star.txt',output_dir=output_dir)
     output:
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}.txt',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_alignment_stat=expand('{summary_dir}/alignment/alignment_stat.txt',summary_dir=summary_dir)
+        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+        summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
+    params:
+        mapped_read_length_by_sample= expand('{output_dir}/stats/mapped_read_length_by_sample/',output_dir=output_dir, sample_id=sample_ids),
+        mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/',output_dir=output_dir, sample_id=sample_ids),
+        mapping_star=expand('{output_dir}/summary/',output_dir=output_dir),
+        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/',summary_dir=summary_dir),
+        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/',summary_dir=summary_dir),
+        summary_alignment_stat=expand('{summary_dir}/alignment/',summary_dir=summary_dir)
     shell:
-        ''' cp {input.mapped_read_length_by_sample} {output.summary_mapped_read_length_by_sample} ;
-            cp {input.mapped_insert_size_by_sample} {output.summary_mapped_insert_size_by_sample} ;
-            cp {input.mapping_star} {output.summary_alignment_stat} ;
+        ''' cp {params.mapped_read_length_by_sample}/* {params.summary_mapped_read_length_by_sample} ;
+            cp {params.mapped_insert_size_by_sample}/* {params.summary_mapped_insert_size_by_sample} ;
+            cp {params.mapping_star} {params.summary_alignment_stat} ;
         '''

@@ -1,27 +1,31 @@
-# vim: syntax=python tabstop=4 expandtab
-# coding: utf-8
+include: '../common.snakemake'
 
-#---------------------------
-# @author: Shang Zhang
-# @email: shang_zhang@foxmail.com
-# @date: Sep, 3rd, 2020
-#---------------------------
+import yaml
+with open(data_dir + '/compare_groups.yaml', 'r') as f:
+    compare_groups = yaml.load(f)
 
+def get_all_inputs(wildcards):
+    inputs = []
+    inputs += expand('{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt',
+            output_dir=output_dir, count_method=config['count_method'], compare_group=compare_groups, diffexp_method=config['diffexp_method'])
+    if has_batch_info:
+        inputs += expand('{output_dir}/differential_expression_with_batch/{batch_index}/{count_method}/{compare_group}/{diffexp_method}.txt',
+                output_dir=output_dir, batch_index=config['batch_index'], count_method=config['count_method'], compare_group=compare_groups, diffexp_method=config['diffexp_method'])
+    return inputs
 
-
-###------------------------The output section---------------------------###
+rule all:
+    input:
+        get_all_inputs
 
 rule differential_expression:
     input:
         matrix='{output_dir}/matrix_processing/filter.{count_method}.txt',
-        classes=config.get('data_dir') + '/sample_classes.txt'
+        classes=data_dir + '/sample_classes.txt'
     output:
         '{output_dir}/differential_expression/{count_method}/{compare_group}/{diffexp_method}.txt'
     params:
-        # positive_class=lambda wildcards: compare_groups[wildcards.compare_group][1],
-        # negative_class=lambda wildcards: compare_groups[wildcards.compare_group][0]
-        positive_class=compare_groups[1],
-        negative_class=compare_groups[0]
+        positive_class=lambda wildcards: compare_groups[wildcards.compare_group][1],
+        negative_class=lambda wildcards: compare_groups[wildcards.compare_group][0]
     shell:
         '''{bin_dir}/differential_expression.R \
             -i {input.matrix} --classes {input.classes} \
@@ -34,8 +38,8 @@ rule differential_expression:
 rule differential_expression_with_batch:
     input:
         matrix='{output_dir}/matrix_processing/filter.{count_method}.txt',
-        classes=config.get('data_dir') + '/sample_classes.txt',
-        batch_info=config.get('data_dir') + '/batch_info.txt'
+        classes=data_dir + '/sample_classes.txt',
+        batch_info=data_dir + '/batch_info.txt'
     output:
         '{output_dir}/differential_expression_with_batch/{batch_index}/{count_method}/{compare_group}/{diffexp_method}.txt'
     params:

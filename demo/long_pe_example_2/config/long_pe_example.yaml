@@ -18,7 +18,7 @@ APA_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_s
 
 # general parameters
 threads_compress: 1
-threads_mapping: 8
+threads_mapping: 2
 
 # mapping parameters
 aligner: STAR

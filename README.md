@@ -34,7 +34,8 @@
 
 ## Installation
 
-- For easy installation, you can use the [exVariance image](https://hub.docker.com/) of [docker](https://www.docker.com) with all dependencies installed:
+#### Docker image
+For easy installation, you can use the [exVariance image](https://hub.docker.com/) of [docker](https://www.docker.com) with all dependencies installed:
 
   ```bash
     docker pull <exVariance_image>
@@ -43,34 +44,37 @@
   - dependencies
     1. [docker](https://www.docker.com/) version>=19.03.4
 
-- Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [udocker](https://github.com/indigo-dc/udocker) to run the container for Linux kernel < 3 or if you don't have permission to use docker.
+#### Singularity image
+Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [udocker](https://github.com/indigo-dc/udocker) to run the container for Linux kernel < 3 or if you don't have permission to use docker.
 
-- Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
+#### Homemade
+**Best Practice**: Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
 
   ```bash
     git clone https://github.com/ShangZhang/exVariance.git
   ```
 
   - dependencies:
-    1. [Anaconda](https://www.anaconda.com) version=4.8.4
-    2. [Python](https://www.python.org/) version=3.7
-    3. [Snakemake](https://snakemake.readthedocs.io) version=5.4.0
+    1. [Anaconda3](https://www.anaconda.com)/[Miniconda3](http://conda.pydata.org/miniconda.html) conda version=4.8.4
+    2. [Python](https://www.python.org/) version=3.7.9
+    3. [Snakemake](https://snakemake.readthedocs.io) version=5.23.0
     
    
   > **Note:**
-  > - how to install special vesion of python and snakemake？
-      1. install the Miniconda/Anaconda Python3 distribution
-      2. The default conda solver is a bit slow and sometimes has issues with selecting the latest package releases. Therefore, we recommend to install Mamba as a drop-in replacement via
-        ```bash
+  > - how to install special vesion of snakemake？
+      1. The default conda solver is a bit slow and sometimes has issues with selecting the latest package releases. Therefore, we recommend to install Mamba as a drop-in replacement via
+        ```
             conda install -c conda-forge mamba
         ```
-      3. you can install Snakemake with
-        ```bash
-            mamba create -n exvariance -c conda-forge -c bioconda python=3.7 snakemake=5.4.0 -y
+      2. you can install Snakemake with
+        ```
+            mamba create -n exVariance -c conda-forge -c bioconda python=3.7 snakemake=5.23.0 -y
         ```      
-  > - you need to add you Anaconda to the source environment
-    `export PATH="~/anaconda3/bin/:$PATH"`
       
+## Download Reference
+exVariance is dependent on reference files which can be found for the supported species listed below: <u>hg38</u>
+
+To unzip these files: tar -xzf hg19.tar.gz OR tar -xzf mm9.tar.gz
 
 ## Usage
 

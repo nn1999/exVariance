@@ -13,7 +13,7 @@
 steps = (
     # RNA_seq
     'RNA_seq_pre_process',
-    'RNA_seq_diff_exp',
+    'RNA_seq_exp_matrix',
     'RNA_seq_fusion_transcripts',
     'RNA_seq_RNA_editing',
     'RNA_seq_SNP',
@@ -93,10 +93,10 @@ if __name__ == '__main__':
         if config['paired_end']:
             snakefile = os.path.join(
                 root_dir, 'snakemake/RNA_seq', 'pre_process_pe.snakemake')
-    elif args.step == 'RNA_seq_diff_exp':
+    elif args.step == 'RNA_seq_exp_matrix':
         if config['paired_end']:
             snakefile = os.path.join(
-                root_dir, 'snakemake/RNA_seq', 'diff_exp.snakemake')
+                root_dir, 'snakemake/RNA_seq', 'exp_matrix.snakemake')
     elif args.step == 'RNA_seq_fusion_transcripts':
         if config['paired_end']:
             snakefile = os.path.join(
@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 root_dir, 'snakemake/DNA_methylation', 'mcta_pe.snakemake')
 
     # logging snakemake command
-    snakemake_args = ['-p', '-k', '--use-conda', '-j', '14', '--rerun-incomplete',
+    snakemake_args = ['-p', '-k', '--use-conda', '-j', '16', '--rerun-incomplete',
                       '--latency-wait', '10', '--snakefile', snakefile, '--configfile', user_config_file]
     logger.debug('snakemake command: ' + str(snakemake_path) +
                  ' ' + str(snakemake_args))
