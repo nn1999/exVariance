@@ -77,7 +77,7 @@ rule map_rRNA_pe:
         index=config.get("genome_dir") + '/index/star/rRNA',
         seedPerWindowNmax=20
     threads:
-        workflow.cores * 0.75
+        workflow.cores * 0.6
     # resources:
     #     mem_mb=20480
     conda:
