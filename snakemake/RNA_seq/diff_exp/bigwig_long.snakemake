@@ -38,7 +38,7 @@ rule index_bam_by_coord:
         '''samtools index {input} > {log} 2>&1
         '''
 
-rule genomecov:
+rule compute_genome_coverage:
     input:
         '{output_dir}/bam_sorted_by_coord/{sample_id}/{map_step}.bam'
     output:

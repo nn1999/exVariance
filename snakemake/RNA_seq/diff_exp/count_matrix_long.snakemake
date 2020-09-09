@@ -12,7 +12,6 @@
 
 ###------------------------The output section---------------------------###
 
-
 rule featurecounts:
     input:
         bam='{output_dir}/bam/{sample_id}/{map_step}.bam',
@@ -208,6 +207,8 @@ rule count_matrix_lncRNA:
     shell:
         '''awk 'NR==1{{print}}NR>1{{split($0,a,"|");if(a[2] == "lncRNA") print}}' {input} > {output} 2> {log}
         '''
+
+###------------------------The summary section---------------------------###
 
 rule summarize_fragment_counts:
     input:

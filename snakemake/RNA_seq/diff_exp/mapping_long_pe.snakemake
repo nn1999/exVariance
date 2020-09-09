@@ -33,35 +33,6 @@ rule rename_fastq_pe:    ## 将fastq中的reads重命名，保存到unmapped文�
             | pigz -c -p {threads} > {output} 2> {log}
         '''
         
-rule count_clean_reads_paired:
-    input:
-        '{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz'
-    output:
-        '{output_dir}/stats/read_counts_clean/{sample_id}'
-    threads:
-        config.get('threads_compress')
-    conda:
-        "../../envs/mapping.yaml"
-    log:
-        '{output_dir}/log/count_clean_reads/{sample_id}.log'
-    shell:
-        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output} 2> {log}
-        '''
-
-rule count_clean_fragments:
-    input:
-        '{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz'
-    output:
-        '{output_dir}/stats/fragment_counts/{sample_id}/clean'
-    threads:
-        config.get('threads_compress')
-    conda:
-        "../../envs/mapping.yaml"
-    log:
-        '{output_dir}/log/count_clean_fragments/{sample_id}.log'
-    shell:
-        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output} 2> {log}
-        '''
 
 rule map_rRNA_pe:
     input:
@@ -101,7 +72,7 @@ rule map_rRNA_pe:
             && rm -f {params.output_prefix}Unmapped.out.mate1 {params.output_prefix}Unmapped.out.mate2
         '''
 
-rule map_genome_pe_1st:
+rule map_genome_pe_1_2:
     input:
         reads1='{output_dir}/unmapped/{sample_id}/rRNA_1.fastq.gz',
         reads2='{output_dir}/unmapped/{sample_id}/rRNA_2.fastq.gz'
@@ -134,7 +105,7 @@ rule map_genome_pe_1st:
             && cp {output.log} {log}
         '''
 
-rule map_genome_pe_2nd:
+rule map_genome_pe_2_2:
     input:
         reads1='{output_dir}/unmapped/{sample_id}/rRNA_1.fastq.gz',
         reads2='{output_dir}/unmapped/{sample_id}/rRNA_2.fastq.gz',
@@ -252,6 +223,40 @@ rule remove_duplicates:
                 M={output.metrics} \
                 READ_NAME_REGEX=null > {log} 2>&1
         '''
+
+
+###------------------------The summary section---------------------------###
+
+rule count_clean_reads_paired:
+    input:
+        '{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz'
+    output:
+        '{output_dir}/stats/read_counts_clean/{sample_id}'
+    threads:
+        config.get('threads_compress')
+    conda:
+        "../../envs/mapping.yaml"
+    log:
+        '{output_dir}/log/count_clean_reads/{sample_id}.log'
+    shell:
+        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output} 2> {log}
+        '''
+
+rule count_clean_fragments:
+    input:
+        '{output_dir}/unmapped/{sample_id}/clean_1.fastq.gz'
+    output:
+        '{output_dir}/stats/fragment_counts/{sample_id}/clean'
+    threads:
+        config.get('threads_compress')
+    conda:
+        "../../envs/mapping.yaml"
+    log:
+        '{output_dir}/log/count_clean_fragments/{sample_id}.log'
+    shell:
+        '''pigz -p {threads} -d -c {input} | wc -l | awk '{{print int($0/4)}}' > {output} 2> {log}
+        '''
+
 
 rule samtools_stats:
     input:
@@ -382,7 +387,11 @@ rule summarize_mapping_star:
 #         shell(nbconvert_command)
 
 
-###------------------------The summary section---------------------------###
+
+
+
+
+
 
 rule summary_mapping_pe:
     input:
