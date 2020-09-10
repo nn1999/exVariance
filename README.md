@@ -2,7 +2,7 @@
 
 **A tool for integrated analysis the liquid biopsy sequencing data**
 
-**Tutorial:** [https://shangzhang.github.io/exVariance/](https://shangzhang.github.io/exVariance/)
+<!-- **Tutorial:** [https://shangzhang.github.io/exVariance/](https://shangzhang.github.io/exVariance/) -->
 
 ---
 
@@ -23,10 +23,15 @@
 ## Table of Contents:
 
 - [Installation](#installation)
+  - [Docker image](#docker-image)
+  - [Singularity image](#singularity-image)
+  - [Homemade](#homemade)
+- [Download References](#download-references)
 - [Usage](#usage)
   - [Help message](#help-message)
   - [Input files](#input-files)
   - [Run](#run)
+- [System Requirements](#system-requirements)
 - [Copyright and License Information](#copyright-and-license-information)
 - [Citation](#citation)
 
@@ -47,8 +52,8 @@ For easy installation, you can use the [exVariance image](https://hub.docker.com
 ### Singularity image
 Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [udocker](https://github.com/indigo-dc/udocker) to run the container for Linux kernel < 3 or if you don't have permission to use docker.
 
-### Homemade (Best Practice)
-Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
+### Homemade
+**Best Practice:** Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
 
   ```bash
     git clone https://github.com/ShangZhang/exVariance.git
@@ -56,7 +61,7 @@ Also, you can also use the [github](https://github.com/ShangZhang/exVariance) so
 
 #### Dependencies:
   1. [Anaconda3](https://www.anaconda.com)/[Miniconda3](http://conda.pydata.org/miniconda.html) conda version latter than 4.8.4
-  2. [Python](https://www.python.org/) version latter than 3.7.0
+  2. [Python](https://www.python.org/) version latter than 3.8.3
   3. [Snakemake](https://snakemake.readthedocs.io) version=5.14.0
   4. [R](https://www.r-project.org/) version=3.6.3
   5. [R packages](https://www.r-project.org/)
@@ -69,7 +74,7 @@ Also, you can also use the [github](https://github.com/ShangZhang/exVariance) so
     ```
     - Whilst running the installation script, follow the commands listed on screen, and press the enter key to scroll.
     - Make sure to answer yes when asked if you want to prepend Miniconda3 to PATH.
-    Close your terminal, open a new one and you should now have Conda working! Test by entering:
+    - Close your terminal, open a new one and you should now have Conda working! Test by entering:
       ```
       conda update conda
       ```
@@ -84,25 +89,22 @@ Also, you can also use the [github](https://github.com/ShangZhang/exVariance) so
     mamba create -n exvariance4 -c conda-forge -c bioconda snakemake=5.14.0 r-base=3.6.3 -y
     ```
 4. Install related **R packages**
-    ```R
-    install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
-    BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
-    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"))
-    ```
-    **OR**
-    ```bash
-    conda install -c r r-argparse -y
-    conda install -c conda-forge r-clustersim r-ggpubr -y
-    conda install -c bioconda bioconductor-scater bioconductor-scran bioconductor-singlecellexperiment bioconductor-sva bioconductor-edger bioconductor-ruvseq -y
-
-    conda install -c eugene_t r-kbet -y
-
-    conda install -c r r-devtools -y
+    **Best Practice**
+    ```r
+    mamba install -c r -c conda-forge -c bioconda -c eugene_t r-argparse r-clustersim r-ggpubr bioconductor-scater bioconductor-scran bioconductor-singlecellexperiment bioconductor-sva bioconductor-edger bioconductor-ruvseq r-kbet r-devtools -y
     ```
     ```r
     devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"))
     ```
-## Download Reference
+    **OR**
+    ```R
+    install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
+    BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
+    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs"))
+    devtools::install_github(c("theislab/kBET"))
+    ```
+    
+## Download References
 exVariance is dependent on reference files which can be found for the supported species listed below: <u>hg38</u>
 
 To unzip these files: tar -xzf hg19.tar.gz OR tar -xzf mm9.tar.gz
