@@ -34,7 +34,7 @@
 
 ## Installation
 
-#### Docker image
+### Docker image
 For easy installation, you can use the [exVariance image](https://hub.docker.com/) of [docker](https://www.docker.com) with all dependencies installed:
 
   ```bash
@@ -44,33 +44,64 @@ For easy installation, you can use the [exVariance image](https://hub.docker.com
   - dependencies
     1. [docker](https://www.docker.com/) version>=19.03.4
 
-#### Singularity image
+### Singularity image
 Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [udocker](https://github.com/indigo-dc/udocker) to run the container for Linux kernel < 3 or if you don't have permission to use docker.
 
-#### Homemade
-**Best Practice**: Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
+### Homemade (Best Practice)
+Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
 
   ```bash
     git clone https://github.com/ShangZhang/exVariance.git
   ```
 
-  - dependencies:
-    1. [Anaconda3](https://www.anaconda.com)/[Miniconda3](http://conda.pydata.org/miniconda.html) conda version=4.8.4
-    2. [Python](https://www.python.org/) version=3.7.9
-    3. [Snakemake](https://snakemake.readthedocs.io) version=5.23.0
-    
-   
-  > **Note:**
-  > - how to install special vesion of snakemake？
-      1. The default conda solver is a bit slow and sometimes has issues with selecting the latest package releases. Therefore, we recommend to install Mamba as a drop-in replacement via
-        ```
-            conda install -c conda-forge mamba
-        ```
-      2. you can install Snakemake with
-        ```
-            mamba create -n exVariance -c conda-forge -c bioconda python=3.7 snakemake=5.23.0 -y
-        ```      
+#### Dependencies:
+  1. [Anaconda3](https://www.anaconda.com)/[Miniconda3](http://conda.pydata.org/miniconda.html) conda version latter than 4.8.4
+  2. [Python](https://www.python.org/) version latter than 3.7.0
+  3. [Snakemake](https://snakemake.readthedocs.io) version=5.14.0
+  4. [R](https://www.r-project.org/) version=3.6.3
+  5. [R packages](https://www.r-project.org/)
       
+#### How to install all the dependencies:
+1. Install **Anaconda3/Minicodna3** and **Python**
+    ```
+    wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
+    bash Miniconda3-latest-Linux-x86_64.sh
+    ```
+    - Whilst running the installation script, follow the commands listed on screen, and press the enter key to scroll.
+    - Make sure to answer yes when asked if you want to prepend Miniconda3 to PATH.
+    Close your terminal, open a new one and you should now have Conda working! Test by entering:
+      ```
+      conda update conda
+      ```
+      - Press y to confirm the conda updates
+2. Install **Mamba**
+  The default conda solver is a bit slow and sometimes has issues with selecting the special version packages. Therefore, we recommend to install Mamba as a drop-in replacement via
+    ```bash
+    conda install -c conda-forge mamba
+    ```
+3. Install **Snakemake 5.14.0** and **R 3.6.3**
+    ```
+    mamba create -n exvariance4 -c conda-forge -c bioconda snakemake=5.14.0 r-base=3.6.3 -y
+    ```
+4. Install related **R packages**
+    ```R
+    install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
+    BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
+    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET")
+    ```
+    **OR**
+    ```bash
+    conda install -c r r-argparse -y
+    conda install -c conda-forge r-clustersim r-ggpubr -y
+    conda install -c bioconda bioconductor-scater bioconductor-scran bioconductor-singlecellexperiment bioconductor-sva bioconductor-edger bioconductor-ruvseq -y
+
+    conda install -c eugene_t r-kbet -y
+
+    conda install -c r r-devtools -y
+    ```
+    ```r
+    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"))
+    ```
 ## Download Reference
 exVariance is dependent on reference files which can be found for the supported species listed below: <u>hg38</u>
 
@@ -91,17 +122,26 @@ usage: exVariance [-h] --user_config_file USER_CONFIG_FILE
                   [--singularity SINGULARITY]
                   [--singularity-wrapper-dir SINGULARITY_WRAPPER_DIR]
 
-                  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,
-                   count_matrix,normalization,differential_expression,fusion_transcripts,
-                   SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,
-                   mcta,dna-seq}
+                  { RNA_seq_pre_process,RNA_seq_exp_matrix,
+                    RNA_seq_fusion_transcripts,RNA_seq_RNA_editing,
+                    RNA_seq_SNP,RNA_seq_APA,RNA_seq_AS,
+                    DNA_seq_ctDNA_mutation,DNA_seq_NP,
+                    DNA_meth_WGBS,DNA_meth_RRBS,
+                    DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq,
+                    DNA_meth_MeDIP_seq,DNA_meth_MCTA_seq
+                    }
 
 exVariance is a tool for integrated analysis the liquid biopsy sequencing data.
 
 positional arguments:
-  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,
-   normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,
-   WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
+  { RNA_seq_pre_process,RNA_seq_exp_matrix,
+    RNA_seq_fusion_transcripts,RNA_seq_RNA_editing,
+    RNA_seq_SNP,RNA_seq_APA,RNA_seq_AS,
+    DNA_seq_ctDNA_mutation,DNA_seq_NP,
+    DNA_meth_WGBS,DNA_meth_RRBS,
+    DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq,
+    DNA_meth_MeDIP_seq,DNA_meth_MCTA_seq
+    }
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -122,7 +162,14 @@ optional arguments:
 
 
 positional arguments:
-  {quality_control,cutadapt,quality_control_clean,mapping,bigwig,count_matrix,normalization,differential_expression,fusion_transcripts,SNP,RNA_editing,AS,APA,WGBS,RRBS,ctdna,wgbs_rrbs,seal_methyl-cap_medip,mcta,dna-seq}
+  { RNA_seq_pre_process,RNA_seq_exp_matrix,
+    RNA_seq_fusion_transcripts,RNA_seq_RNA_editing,
+    RNA_seq_SNP,RNA_seq_APA,RNA_seq_AS,
+    DNA_seq_ctDNA_mutation,DNA_seq_NP,
+    DNA_meth_WGBS,DNA_meth_RRBS,
+    DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq,
+    DNA_meth_MeDIP_seq,DNA_meth_MCTA_seq
+    }
 
 For additional help or support, please visit https://github.com/ShangZhang/exVariance
 
@@ -130,31 +177,47 @@ For additional help or support, please visit https://github.com/ShangZhang/exVar
 
 ### Input files
 
-Several examples can be found in `demo` directory with the following structure:
+RNA-seq related examples can be found in `demo` directory with the following structure:
 
 ```text
     ./demo/*/
     |-- config
     |   |-- default_config.yaml
-    |   `-- example.yaml
+    |   |-- <data_name>.yaml
+    |   |-- dapars_configure.txt
+    |   `-- RNAEditor_configure.txt
     |-- data
-    |   |-- fastq
-    |   `-- sample_ids.txt
-    |-- genome
-    |   `-- fasta
+    |   |-- fastq/
+    |   |-- sample_ids.txt
+    |   |-- sample_classes.txt
+    |   |-- compare_groups.yaml
+    |   `-- batch_info.txt
     |-- output
-    `-- tmp
+    `-- summary
+```
+
+Other related examples can be found in `demo` directory with the following structure:
+
+```text
+    ./demo/*/
+    |-- config
+    |   |-- default_config.yaml
+    |   `-- <data_name>.yaml
+    |-- data
+    |   |-- fastq/
+    |   `-- sample_ids.txt
+    |-- output
+    `-- summary
 ```
 
 > **Note:**
 >
 > - `config/default_config.yaml`: the default configuration file. If you don't understand, don't change the content.
 > - `config/<data_name>.yaml`: the user defined configuration file, to point out the related used path.
-> - `data/fastq/` : directory contain samples name, suffixed with 'fasta.gz' or 'fastq.gz'.
-> - `data/example/sample_ids.txt`: table of sample names (remove the suffix 'fasta.gz' or 'fastq.gz' )
-> - `genome/f` : the genome directory
+> - `data/fastq/` : directory contain samples name, suffixed with 'fastq' 'fasta.gz' or 'fastq.gz'.
+> - `data/sample_ids.txt`: table of sample names (remove the suffix 'fastq' 'fasta.gz' or 'fastq.gz' )
 > - `output/`: the output directory
-> - `tmp/` : contain the temporary files
+> - `summary/` : contain the summary files
 
 You can create your own data directory with the above directory structure.
 Multiple datasets can be put in the same directory by replacing "example" with your own dataset names.

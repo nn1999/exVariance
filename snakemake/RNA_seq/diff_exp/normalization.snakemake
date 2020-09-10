@@ -12,7 +12,7 @@
 ###------------------------The output section---------------------------###
 
 # 以下是需要安装的工具，后续将其添加到conda里，进而形成conda env
-# conda install -c r r-argparse
+# conda install -c r r-argparse -y
 # conda install -c conda-forge r-clustersim -y
 # conda install -c bioconda bioconductor-scater bioconductor-scran bioconductor-singlecellexperiment -y
 
@@ -21,7 +21,7 @@
 # conda install -c conda-forge r-ggpubr -y
 # conda install -c bioconda bioconductor-ruvseq -y
 
-# install.packages("devtools")
+# conda install -c r r-devtools -y
 # devtools::install_github("hemberg-lab/scRNA.seq.funcs")
 
 rule filter_step:

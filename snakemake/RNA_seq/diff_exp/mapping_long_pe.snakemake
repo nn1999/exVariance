@@ -393,24 +393,24 @@ rule summarize_mapping_star:
 
 
 
-rule summary_mapping_pe:
-    input:
-        mapped_read_length_by_sample= expand('{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
-        mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
-        mapping_star=expand('{output_dir}/summary/mapping_star.txt',output_dir=output_dir)
-    output:
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
-    params:
-        mapped_read_length_by_sample= expand('{output_dir}/stats/mapped_read_length_by_sample/',output_dir=output_dir, sample_id=sample_ids),
-        mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/',output_dir=output_dir, sample_id=sample_ids),
-        mapping_star=expand('{output_dir}/summary/',output_dir=output_dir),
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/',summary_dir=summary_dir),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/',summary_dir=summary_dir),
-        summary_alignment_stat=expand('{summary_dir}/alignment/',summary_dir=summary_dir)
-    shell:
-        ''' cp {params.mapped_read_length_by_sample}/* {params.summary_mapped_read_length_by_sample} ;
-            cp {params.mapped_insert_size_by_sample}/* {params.summary_mapped_insert_size_by_sample} ;
-            cp {params.mapping_star} {params.summary_alignment_stat} ;
-        '''
+# rule summary_mapping_pe:
+#     input:
+#         mapped_read_length_by_sample= expand('{output_dir}/stats/mapped_read_length_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
+#         mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/{sample_id}',output_dir=output_dir, sample_id=sample_ids),
+#         mapping_star=expand('{output_dir}/summary/mapping_star.txt',output_dir=output_dir)
+#     output:
+#         summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+#         summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+#         summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
+#     params:
+#         mapped_read_length_by_sample= expand('{output_dir}/stats/mapped_read_length_by_sample/',output_dir=output_dir, sample_id=sample_ids),
+#         mapped_insert_size_by_sample=expand('{output_dir}/stats/mapped_insert_size_by_sample/',output_dir=output_dir, sample_id=sample_ids),
+#         mapping_star=expand('{output_dir}/summary/',output_dir=output_dir),
+#         summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/',summary_dir=summary_dir),
+#         summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/',summary_dir=summary_dir),
+#         summary_alignment_stat=expand('{summary_dir}/alignment/',summary_dir=summary_dir)
+#     shell:
+#         ''' mkdir -p {params.summary_mapped_read_length_by_sample} ; cp {params.mapped_read_length_by_sample}/* {params.summary_mapped_read_length_by_sample} ; \
+#             mkdir -p {params.summary_mapped_insert_size_by_sample} ; cp {params.mapped_insert_size_by_sample}/* {params.summary_mapped_insert_size_by_sample} ; \
+#             mkdir -p {params.summary_alignment_stat} ; cp {params.mapping_star} {params.summary_alignment_stat} ;
+#         '''

@@ -44,9 +44,9 @@ def get_all_inputs(wildcards):
         map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         # mapping long pe # summary section
-        summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
-        summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
+        # summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+        # summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
+        # summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
     )
 
     # bigwig_long.snakemake
