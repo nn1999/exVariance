@@ -87,7 +87,7 @@ Also, you can also use the [github](https://github.com/ShangZhang/exVariance) so
     ```R
     install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
     BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
-    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET")
+    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"))
     ```
     **OR**
     ```bash
@@ -224,47 +224,46 @@ Multiple datasets can be put in the same directory by replacing "example" with y
 
 ### Run
 
-#### for paired_end/single_read whole genome bisulfite sequencing (WGBS) data
+![exVariance analysis](docs/imgs/ExVariance_analysis.svg)
 
+#### For RNA-seq realted analysis
 ```bash
-exVariance -u <USER_CONFIG_FILE> WGBS
+exVariance -u <USER_CONFIG_FILE> RNA_seq_pre_process
+```
+```bash
+exVariance -u <USER_CONFIG_FILE> RNA_seq_exp_matrix
+
+exVariance -u <USER_CONFIG_FILE> RNA_seq_fusion_transcripts
+
+exVariance -u <USER_CONFIG_FILE> RNA_seq_RNA_editing
+
+exVariance -u <USER_CONFIG_FILE> RNA_seq_SNP
+
+exVariance -u <USER_CONFIG_FILE> RNA_seq_APA
+
+exVariance -u <USER_CONFIG_FILE> RNA_seq_AS
 ```
 
-#### for MspI_ApeKI_double_enzyme/normal reduced represented bisulfite sequencing (RRBS) data
-
+#### For DNA-methylation realted analysis
 ```bash
-exVariance -u <USER_CONFIG_FILE> RRBS
+exVariance -u <USER_CONFIG_FILE> DNA_meth_WGBS
+
+exVariance -u <USER_CONFIG_FILE> DNA_meth_RRBS
+
+exVariance -u <USER_CONFIG_FILE> DNA_meth_Seal_seq
+
+exVariance -u <USER_CONFIG_FILE> DNA_meth_Methyl-cap_seq
+
+exVariance -u <USER_CONFIG_FILE> DNA_meth_MeDIP_seq
+
+exVariance -u <USER_CONFIG_FILE> DNA_meth_MCTA_seq
 ```
 
-#### for ctDNA sequencing data
-
+#### For DNA-seq realted analysis
 ```bash
-exVariance -u <USER_CONFIG_FILE> ctdna
-```
+exVariance -u <USER_CONFIG_FILE> DNA_seq_ctDNA_mutation
 
-#### for cell_free/exosome long/small paired_end/single_read RNA sequencing data
-
-##### Pre-analysis
-
-```bash
-exVariance -u <USER_CONFIG_FILE> quality_control
-exVariance -u <USER_CONFIG_FILE> cutadapt
-exVariance -u <USER_CONFIG_FILE> quality_control_clean
-exVariance -u <USER_CONFIG_FILE> mapping
-exVariance -u <USER_CONFIG_FILE> bigwig
-exVariance -u <USER_CONFIG_FILE> count_matrix
-exVariance -u <USER_CONFIG_FILE> normalization
-```
-
-##### Analysis
-
-```bash
-exVariance -u <USER_CONFIG_FILE> differential_expression
-exVariance -u <USER_CONFIG_FILE> fusion_transcripts
-exVariance -u <USER_CONFIG_FILE> SNP
-exVariance -u <USER_CONFIG_FILE> RNA_editing    ## for RNA editing analysis, the sequencing reads must more than 4000000 Sxequences.
-exVariance -u <USER_CONFIG_FILE> AS
-exVariance -u <USER_CONFIG_FILE> APA
+exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 ```
 
 ## System Requirements:
