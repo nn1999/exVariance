@@ -210,40 +210,40 @@ rule count_matrix_lncRNA:
 
 ###------------------------The summary section---------------------------###
 
-rule summarize_fragment_counts:
-    input:
-        fragment_counts=lambda wildcards: expand('{output_dir}/stats/fragment_counts/{sample_id}/{map_step}',
-            output_dir=wildcards.output_dir, sample_id=sample_ids, map_step=map_steps),
-        count_matrix='{output_dir}/count_matrix/featurecounts.txt'
-    output:
-        '{output_dir}/summary/read_counts.txt'
-    wildcard_constraints:
-        count_method=count_method_regex
-    run:
-        import pandas as pd
-        # read fragment counts for each mapping step
-        fragment_counts = pd.DataFrame(index=map_steps, columns=sample_ids)
-        for filename in input.fragment_counts:
-            c = filename.split('/')
-            sample_id = c[-2]
-            map_step = c[-1]
-            with open(filename, 'r') as f:
-                fragment_counts.loc[map_step, sample_id] = int(f.read().strip())
-        fragment_counts = fragment_counts.astype('int')
-        fragment_counts.columns.name = 'sample_id'
-        fragment_counts.drop(index='circRNA', inplace=True)
+# rule summarize_fragment_counts:
+#     input:
+#         fragment_counts=lambda wildcards: expand(config.get('summary_dir') + '/all_bam_stats/{sample_id}/fragment_counts/{map_step}',
+#             sample_id=sample_ids, map_step=map_steps),
+#         count_matrix=config.get('output_dir') + '/count_matrix/featurecounts.txt'
+#     output:
+#         config.get('summary_dir') + '/read_counts/read_counts.txt'
+#     wildcard_constraints:
+#         count_method=count_method_regex
+#     run:
+#         import pandas as pd
+#         # read fragment counts for each mapping step
+#         fragment_counts = pd.DataFrame(index=map_steps, columns=sample_ids)
+#         for filename in input.fragment_counts:
+#             c = filename.split('/')
+#             sample_id = c[-2]
+#             map_step = c[-1]
+#             with open(filename, 'r') as f:
+#                 fragment_counts.loc[map_step, sample_id] = int(f.read().strip())
+#         fragment_counts = fragment_counts.astype('int')
+#         fragment_counts.columns.name = 'sample_id'
+#         fragment_counts.drop(index='circRNA', inplace=True)
 
-        # read count matrix
-        count_matrix = pd.read_table(input.count_matrix, sep='\t', index_col=0)
-        feature_info = count_matrix.index.to_series().str.split('|', expand=True)
-        feature_info.columns = ['gene_id', 'gene_type', 'gene_name', 'domain_id', 'transcript_id', 'start', 'end']
-        count_matrix = pd.concat([feature_info, count_matrix], axis=1)
-        counts_by_rnatype = count_matrix.groupby('gene_type')[sample_ids].sum()
-        counts_by_rnatype = counts_by_rnatype.loc[:, sample_ids]
+#         # read count matrix
+#         count_matrix = pd.read_table(input.count_matrix, sep='\t', index_col=0)
+#         feature_info = count_matrix.index.to_series().str.split('|', expand=True)
+#         feature_info.columns = ['gene_id', 'gene_type', 'gene_name', 'domain_id', 'transcript_id', 'start', 'end']
+#         count_matrix = pd.concat([feature_info, count_matrix], axis=1)
+#         counts_by_rnatype = count_matrix.groupby('gene_type')[sample_ids].sum()
+#         counts_by_rnatype = counts_by_rnatype.loc[:, sample_ids]
 
-        matrix = pd.concat([fragment_counts, counts_by_rnatype], axis=0)
-        matrix.index.name = 'rna_type'
-        matrix.to_csv(output[0], sep='\t', header=True, index=True, na_rep='NA')
+#         matrix = pd.concat([fragment_counts, counts_by_rnatype], axis=0)
+#         matrix.index.name = 'rna_type'
+#         matrix.to_csv(output[0], sep='\t', header=True, index=True, na_rep='NA')
 
 # rule summarize_fragment_counts_jupyter:
 #     input:
