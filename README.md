@@ -284,6 +284,8 @@ exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 ![rulegraph_RNA_seq_pre_process_pe](docs/imgs/rulegraph_RNA_seq_pre_process_pe.svg)
 
 ##### expression matrix
+including filter, imputation, normalization, batch removing,
+
 ![rulegraph_RNA_seq_exp_matrix_pe](docs/imgs/rulegraph_RNA_seq_exp_matrix_pe.svg)
 
 ##### fusion transcript
