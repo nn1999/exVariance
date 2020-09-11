@@ -40,13 +40,21 @@ def get_all_inputs(wildcards):
     # mapping_long_pe.snakemake
     available_inputs = dict(
         # mapping long pe # output section
-        unmapped=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',output_dir=output_dir, sample_id=sample_ids, mate_index=[1,2]),
-        map_paired=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
+        fastq_file=expand('{output_dir}/unmapped/{sample_id}/clean_{mate_index}.fastq.gz',output_dir=output_dir, sample_id=sample_ids, mate_index=[1,2]),
+        bam=expand('{output_dir}/bam/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         map_paired_sorted_by_name=expand('{output_dir}/bam_sorted_by_name/{sample_id}/{map_step}.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
+        # rmdup_bam=expand('{output_dir}/bam/{sample_id}/{map_step}_rmdup.bam',output_dir=output_dir, sample_id=sample_ids, map_step=map_steps),
         # mapping long pe # summary section
-        # summary_mapped_read_length_by_sample=expand('{summary_dir}/alignment/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
-        # summary_mapped_insert_size_by_sample=expand('{summary_dir}/alignment/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir, sample_id=sample_ids),
-        # summary_alignment_stat=expand('{summary_dir}/alignment/mapping_star.txt',summary_dir=summary_dir)
+        count_clean_reads           =expand('{summary_dir}/fastq_clean_count/count_clean_reads/{sample_id}',summary_dir=summary_dir,sample_id=sample_ids),
+        count_clean_fragments       =expand('{summary_dir}/fastq_clean_count/count_clean_fragments/{sample_id}/clean',summary_dir=summary_dir,sample_id=sample_ids),
+        samtools_stats              =expand('{summary_dir}/all_bam_stats/{sample_id}/samtools_stats/{map_step}.txt',summary_dir=summary_dir,sample_id=sample_ids,map_step=map_steps),
+        fragment_counts             =expand('{summary_dir}/all_bam_stats/{sample_id}/fragment_counts/{map_step}',summary_dir=summary_dir,sample_id=sample_ids,map_step=map_steps),
+        insert_size_average         =expand('{summary_dir}/all_bam_stats/{sample_id}/insert_size_average/{map_step}',summary_dir=summary_dir,sample_id=sample_ids,map_step=map_steps),
+        insert_size_hist            =expand('{summary_dir}/all_bam_stats/{sample_id}/insert_size_hist/{map_step}',summary_dir=summary_dir,sample_id=sample_ids,map_step=map_steps),
+        read_length_hist            =expand('{summary_dir}/all_bam_stats/{sample_id}/read_length_hist/{map_step}',summary_dir=summary_dir,sample_id=sample_ids,map_step=map_steps),
+        mapped_read_length_by_sample=expand('{summary_dir}/all_bam_stats/mapped_read_length_by_sample/{sample_id}',summary_dir=summary_dir,sample_id=sample_ids),
+        mapped_insert_size_by_sample=expand('{summary_dir}/all_bam_stats/mapped_insert_size_by_sample/{sample_id}',summary_dir=summary_dir,sample_id=sample_ids),
+        mapping_stat                =expand('{summary_dir}/all_bam_stats/mapping_stat.txt',summary_dir=summary_dir),
     )
 
     # bigwig_long.snakemake
