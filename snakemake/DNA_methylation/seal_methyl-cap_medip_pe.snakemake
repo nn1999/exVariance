@@ -1,4 +1,4 @@
-include: 'common.snakemake'
+include: '../common.snakemake'
 
 import shutil
 

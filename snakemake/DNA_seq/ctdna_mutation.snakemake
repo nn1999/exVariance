@@ -1,4 +1,4 @@
-include: 'common.snakemake'
+include: '../common.snakemake'
 
 root_dir=config.get('root_dir')
 annovar_dir=config.get('annovar_dir')  ##补充annovar_dir到注释文件中
@@ -14,8 +14,8 @@ rule all:
 ## 这一步需要切换至python2.7环境下，后续需要在建立环境时创建一个python2.7环境，替代fusion-inspector当前环境。
 rule afterQC:
     input:
-        read1='auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_1.fastq')',
-        read2='auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_2.fastq')'
+        read1=auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_1.fastq'),
+        read2=auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_2.fastq')
     output:
         read1='{output_dir}/afterQC/{sample_id}_1.good.fq.gz',
         read2='{output_dir}/afterQC/{sample_id}_2.good.fq.gz'
@@ -157,7 +157,7 @@ rule generate_mpileup:
         mpileup='{output_dir}/mpileup/{sample_id}.dedup.mpileup'
     params:
         genome_fa=config.get("genome_dir") + '/fasta/genome.fa'
-        target_bed=    ##需要填写或生成target capturing regions，demon data可以直接下载
+        # target_bed=    ##需要填写或生成target capturing regions，demon data可以直接下载
     conda:
         "envs/ctdna.yaml"
     log:
@@ -226,7 +226,7 @@ rule Annovar_annotation:
         "envs/ctdna.yaml"
     log:
         snp='{output_dir}/log/ctdna/Annovar_annotation/{sample_id}.snp.log',
-        snp='{output_dir}/log/ctdna/Annovar_annotation/{sample_id}.indel.log'
+        indel='{output_dir}/log/ctdna/Annovar_annotation/{sample_id}.indel.log'
     shell:
         '''{annovar_dir}/table_annovar.pl {input.snp} \
                 {annovar_dir}/humandb_hg38/ \
@@ -287,7 +287,7 @@ rule mutated_reads_counting_with_MrBam:
                 > {log.indel} 2>&1
         '''
 
-rule SNP/INDEL_filtering:
+rule SNP_INDEL_filtering:
     input:
         snp='{output_dir}/MrBam/{sample_id}.snp_MrBam.txt',
         indel='{output_dir}/MrBam/{sample_id}.indel_MrBam.txt'

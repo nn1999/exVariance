@@ -1,5 +1,5 @@
 shell.prefix('set -x;')
-include: 'common.snakemake'
+include: '../common.snakemake'
 
 output_dir=config.get("output_dir")
 RNAEditor_config_file=config.get('RNAEditor_config_file')

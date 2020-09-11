@@ -1,4 +1,4 @@
-include: 'common.snakemake'
+include: '../common.snakemake'
 
 snp_dir = config.get('genome_dir') + '/../snp'
 
@@ -24,7 +24,7 @@ rule STAR_mapping:
         "{output_dir}/SNP/4.StarAlign/{sample_id}.Log.progress.out",
         "{output_dir}/SNP/4.StarAlign/{sample_id}.SJ.out.tab"
     params:
-        limitBAMsortRAM = 60000000000,
+        limitBAMsortRAM = 45000000000,
         index=config.get("genome_dir") + '/long_index/star',
         outFileNamePrefix = "{output_dir}/SNP/4.StarAlign/{sample_id}."
     threads:

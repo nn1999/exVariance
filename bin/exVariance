@@ -120,11 +120,11 @@ if __name__ == '__main__':
     # DNA_seq
     elif args.step == 'DNA_seq_ctDNA_mutation':
         snakefile = os.path.join(
-            root_dir, 'snakemake/DNA_seq', 'ctdna.snakemake')
+            root_dir, 'snakemake/DNA_seq', 'ctdna_mutation.snakemake')
     elif args.step == 'DNA_seq_NP':
         if config['paired_end']:
             snakefile = os.path.join(
-                root_dir, 'snakemake/DNA_seq', 'DNA-seq_pe.snakemake')
+                root_dir, 'snakemake/DNA_seq', 'DNA-seq_np_pe.snakemake')
     # DNA_methylation
     elif args.step == 'DNA_meth_WGBS':
         if config['paired_end']:

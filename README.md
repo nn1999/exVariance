@@ -286,21 +286,30 @@ exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 ##### expression matrix
 ![rulegraph_RNA_seq_exp_matrix_pe](docs/imgs/rulegraph_RNA_seq_exp_matrix_pe.svg)
 
+##### fusion transcript
+![rulegraph_RNA_seq_fusion_transcripts_pe](docs/imgs/rulegraph_RNA_seq_fusion_transcripts_pe.svg)
+
+##### SNP
+![rulegraph_RNA_seq_SNP](docs/imgs/rulegraph_RNA_seq_SNP.svg)
+
+##### RNA editing
+![rulegraph_RNA_seq_RNA_editing](docs/imgs/rulegraph_RNA_seq_RNA_editing.svg)
+
 #### For DNA methylation realted analysis
 
 ##### DNA_meth_WGBS,DNA_meth_RRBS
-![wgbs_rrbs_pe](docs/imgs/wgbs_rrbs_pe.svg)
+![wgbs_rrbs_pe](docs/imgs/rulegraph_DNA_meth_wgbs_rrbs_pe.svg)
 
-##### DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq
-![seal_methyl-cap_medip_pe](docs/imgs/seal_methyl-cap_medip_pe.svg)
+##### DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq,DNA_meth_MeDIP_seq
+![seal_methyl-cap_medip_pe](docs/imgs/rulegraph_DNA_meth_seal_methyl-cap_medip_pe.svg)
 
-##### DNA_meth_MeDIP_seq,DNA_meth_MCTA_seq
-![mcta_pe](docs/imgs/mcta_pe.svg)
+##### DNA_meth_MCTA_seq
+![mcta_pe](docs/imgs/rulegraph_DNA_meth_mcta_pe.svg)
 
 #### For DNA-seq related analysis
 
 ##### DNA-seq np
-![dna-seq_np_pe](docs/imgs/dna-seq_np_pe.svg)
+![dna-seq_np_pe](docs/imgs/rulegraph_DNA_seq_np_pe.svg)
 
 
 

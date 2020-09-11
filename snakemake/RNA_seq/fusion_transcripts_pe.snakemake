@@ -1,5 +1,5 @@
 shell.prefix('set -x;')
-include: 'common.snakemake'
+include: '../common.snakemake'
 
 ctat_lib_dir=config.get("ctat_lib_dir")
 output_dir=config.get("output_dir")
