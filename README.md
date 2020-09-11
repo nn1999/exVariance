@@ -23,9 +23,9 @@
 ## Table of Contents:
 
 - [Installation](#installation)
+  - [Best Practice](#best-practice)
   - [Docker image](#docker-image)
   - [Singularity image](#singularity-image)
-  - [Homemade](#homemade)
 - [Download References](#download-references)
 - [Usage](#usage)
   - [Help message](#help-message)
@@ -39,21 +39,8 @@
 
 ## Installation
 
-### Docker image
-For easy installation, you can use the [exVariance image](https://hub.docker.com/) of [docker](https://www.docker.com) with all dependencies installed:
-
-  ```bash
-    docker pull <exVariance_image>
-  ```
-
-  - dependencies
-    1. [docker](https://www.docker.com/) version>=19.03.4
-
-### Singularity image
-Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [udocker](https://github.com/indigo-dc/udocker) to run the container for Linux kernel < 3 or if you don't have permission to use docker.
-
-### Homemade
-**Best Practice:** Also, you can also use the [github](https://github.com/ShangZhang/exVariance) source code and install dependencies below listed:
+### Best Practice
+Install the [github](https://github.com/ShangZhang/exVariance) source code and ependencies below listed:
 
   ```bash
     git clone https://github.com/ShangZhang/exVariance.git
@@ -104,6 +91,20 @@ Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [u
     devtools::install_github(c("theislab/kBET"))
     ```
     
+### Docker image
+For easy installation, you can use the [exVariance image](https://hub.docker.com/) of [docker](https://www.docker.com) with all dependencies installed:
+
+  ```bash
+    docker pull <exVariance_image>
+  ```
+
+  - dependencies
+    1. [docker](https://www.docker.com/) version>=19.03.4
+
+### Singularity image
+Alternatively, you can use use [singularity](https://singularity.lbl.gov/) or [udocker](https://github.com/indigo-dc/udocker) to run the container for Linux kernel < 3 or if you don't have permission to use docker.
+
+
 ## Download References
 exVariance is dependent on reference files which can be found for the supported species listed below: <u>hg38</u>
 
