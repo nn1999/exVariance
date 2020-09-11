@@ -229,7 +229,7 @@ Multiple datasets can be put in the same directory by replacing "example" with y
 
 ### Run
 
-![exVariance analysis](docs/imgs/ExVariance_analysis.svg)
+<div align="center"><img alt="exVariance analysis" width="500" src="docs/imgs/ExVariance_analysis.svg"/></div>
 
 #### For RNA-seq realted analysis
 
@@ -275,44 +275,43 @@ exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 ### Output and Summary
 
 #### For RNA-seq realted analysis
-![exVariance RNA-seq output](docs/imgs/ExVariance_RNA_seq_output_summary.svg)
+<div align="center"><img alt="exVariance RNA-seq output" width="600" src="docs/imgs/ExVariance_RNA_seq_output_summary.svg"/></div>
 
 ### Rule Graph
 
 #### For RNA-seq realted analysis
 ##### pre prpcess
-![rulegraph_RNA_seq_pre_process_pe](docs/imgs/rulegraph_RNA_seq_pre_process_pe.svg)
+<div align="center"><img alt="rulegraph_RNA_seq_pre_process_pe" width="300" src="docs/imgs/rulegraph_RNA_seq_pre_process_pe.svg"/></div>
 
 ##### expression matrix
 including filter, imputation, normalization, batch removing,
 
-![rulegraph_RNA_seq_exp_matrix_pe](docs/imgs/rulegraph_RNA_seq_exp_matrix_pe.svg)
+<div align="center"><img alt="rulegraph_RNA_seq_exp_matrix_pe" width="800" src="docs/imgs/rulegraph_RNA_seq_exp_matrix_pe.svg"/></div>
 
 ##### fusion transcript
-![rulegraph_RNA_seq_fusion_transcripts_pe](docs/imgs/rulegraph_RNA_seq_fusion_transcripts_pe.svg)
+<!-- <div align="center"><img alt="rulegraph_RNA_seq_fusion_transcripts_pe" width="150" src="docs/imgs/rulegraph_RNA_seq_fusion_transcripts_pe.svg"/></div> -->
 
 ##### SNP
-![rulegraph_RNA_seq_SNP](docs/imgs/rulegraph_RNA_seq_SNP.svg)
+<div align="center"><img alt="rulegraph_RNA_seq_SNP" width="250" src="docs/imgs/rulegraph_RNA_seq_SNP.svg"/></div>
 
 ##### RNA editing
-![rulegraph_RNA_seq_RNA_editing](docs/imgs/rulegraph_RNA_seq_RNA_editing.svg)
+<!-- <div align="center"><img alt="rulegraph_RNA_seq_RNA_editing" width="150" src="docs/imgs/rulegraph_RNA_seq_RNA_editing.svg"/></div> -->
 
 #### For DNA methylation realted analysis
 
 ##### DNA_meth_WGBS,DNA_meth_RRBS
-![wgbs_rrbs_pe](docs/imgs/rulegraph_DNA_meth_wgbs_rrbs_pe.svg)
+<div align="center"><img alt="wgbs_rrbs_pe" width="500" src="docs/imgs/rulegraph_DNA_meth_wgbs_rrbs_pe.svg"/></div>
 
 ##### DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq,DNA_meth_MeDIP_seq
-![seal_methyl-cap_medip_pe](docs/imgs/rulegraph_DNA_meth_seal_methyl-cap_medip_pe.svg)
+<div align="center"><img alt="seal_methyl-cap_medip_pe" width="400" src="docs/imgs/rulegraph_DNA_meth_seal_methyl-cap_medip_pe.svg"/></div>
 
 ##### DNA_meth_MCTA_seq
-![mcta_pe](docs/imgs/rulegraph_DNA_meth_mcta_pe.svg)
+<div align="center"><img alt="mcta_pe" width="300" src="docs/imgs/rulegraph_DNA_meth_mcta_pe.svg"/></div>
 
 #### For DNA-seq related analysis
 
 ##### DNA-seq np
-![dna-seq_np_pe](docs/imgs/rulegraph_DNA_seq_np_pe.svg)
-
+<div align="center"><img alt="dna-seq_np_pe" width="400" src="docs/imgs/rulegraph_DNA_seq_np_pe.svg"/></div>
 
 
 ## System Requirements:
