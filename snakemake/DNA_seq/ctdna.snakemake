@@ -3,6 +3,7 @@ include: '../common.snakemake'
 root_dir=config.get('root_dir')
 annovar_dir=config.get('annovar_dir')  ##补充annovar_dir到注释文件中
 
+# source: https://github.com/OpenGene/ctdna-pipeline/blob/master/pipeline.sh
 
 rule all:
     input:
@@ -11,7 +12,6 @@ rule all:
         indel_filter='{output_dir}/MrBam/{sample_id}.indel_MrBam.txt',
         mutscan='{output_dir}/mutscan/{sample_id}_mutscan.html'
 
-## 这一步需要切换至python2.7环境下，后续需要在建立环境时创建一个python2.7环境，替代fusion-inspector当前环境。
 rule afterQC:
     input:
         read1=auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_1.fastq'),
@@ -110,15 +110,6 @@ rule bam_sort:
             -f {output.sorted_bam} \
             > {log} 2>&1
         '''
-
-
-
-
-
-
-
-
-
 
 rule deduplication:
     input:

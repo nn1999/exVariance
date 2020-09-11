@@ -118,9 +118,9 @@ if __name__ == '__main__':
             snakefile = os.path.join(
                 root_dir, 'snakemake/RNA_seq', 'AS.snakemake')
     # DNA_seq
-    elif args.step == 'DNA_seq_ctDNA_mutation':
+    elif args.step == 'DNA_seq_ctDNA':
         snakefile = os.path.join(
-            root_dir, 'snakemake/DNA_seq', 'ctdna_mutation.snakemake')
+            root_dir, 'snakemake/DNA_seq', 'ctdna.snakemake')
     elif args.step == 'DNA_seq_NP':
         if config['paired_end']:
             snakefile = os.path.join(

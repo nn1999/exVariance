@@ -284,7 +284,7 @@ exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 <div align="center"><img alt="rulegraph_RNA_seq_pre_process_pe" width="300" src="docs/imgs/rulegraph_RNA_seq_pre_process_pe.svg"/></div>
 
 ##### expression matrix
-including filter, imputation, normalization, batch removing,
+including filter, imputation, normalization, batch removing
 
 <div align="center"><img alt="rulegraph_RNA_seq_exp_matrix_pe" width="800" src="docs/imgs/rulegraph_RNA_seq_exp_matrix_pe.svg"/></div>
 
@@ -292,7 +292,7 @@ including filter, imputation, normalization, batch removing,
 <!-- <div align="center"><img alt="rulegraph_RNA_seq_fusion_transcripts_pe" width="150" src="docs/imgs/rulegraph_RNA_seq_fusion_transcripts_pe.svg"/></div> -->
 
 ##### SNP
-<div align="center"><img alt="rulegraph_RNA_seq_SNP" width="250" src="docs/imgs/rulegraph_RNA_seq_SNP.svg"/></div>
+<div align="center"><img alt="rulegraph_RNA_seq_SNP" width="200" src="docs/imgs/rulegraph_RNA_seq_SNP.svg"/></div>
 
 ##### RNA editing
 <!-- <div align="center"><img alt="rulegraph_RNA_seq_RNA_editing" width="150" src="docs/imgs/rulegraph_RNA_seq_RNA_editing.svg"/></div> -->
