@@ -18,9 +18,9 @@
 <g id="node2" class="node"><title>1</title>
 <path fill="none" stroke="#d6d856" stroke-width="2" d="M623,-196C623,-196 12,-196 12,-196 6,-196 0,-190 0,-184 0,-184 0,-156 0,-156 0,-150 6,-144 12,-144 12,-144 623,-144 623,-144 629,-144 635,-150 635,-156 635,-156 635,-184 635,-184 635,-190 629,-196 623,-196"/>
 <text text-anchor="middle" x="317.5" y="-184" font-family="sans" font-size="10.00">fastqc_pe</text>
-<text text-anchor="middle" x="317.5" y="-173" font-family="sans" font-size="10.00">mate_index: 1</text>
+<!-- <text text-anchor="middle" x="317.5" y="-173" font-family="sans" font-size="10.00">mate_index: 1</text>
 <text text-anchor="middle" x="317.5" y="-162" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/seal_methyl&#45;cap_medip_pe/output</text>
-<text text-anchor="middle" x="317.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR6946476</text>
+<text text-anchor="middle" x="317.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR6946476</text> -->
 </g>
 <!-- 1&#45;&gt;0 -->
 <g id="edge1" class="edge"><title>1&#45;&gt;0</title>
@@ -41,9 +41,9 @@
 <g id="node3" class="node"><title>2</title>
 <path fill="none" stroke="#d6d856" stroke-width="2" d="M1276,-196C1276,-196 665,-196 665,-196 659,-196 653,-190 653,-184 653,-184 653,-156 653,-156 653,-150 659,-144 665,-144 665,-144 1276,-144 1276,-144 1282,-144 1288,-150 1288,-156 1288,-156 1288,-184 1288,-184 1288,-190 1282,-196 1276,-196"/>
 <text text-anchor="middle" x="970.5" y="-184" font-family="sans" font-size="10.00">fastqc_pe</text>
-<text text-anchor="middle" x="970.5" y="-173" font-family="sans" font-size="10.00">mate_index: 2</text>
+<!-- <text text-anchor="middle" x="970.5" y="-173" font-family="sans" font-size="10.00">mate_index: 2</text>
 <text text-anchor="middle" x="970.5" y="-162" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/seal_methyl&#45;cap_medip_pe/output</text>
-<text text-anchor="middle" x="970.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR6946476</text>
+<text text-anchor="middle" x="970.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR6946476</text> -->
 </g>
 <!-- 2&#45;&gt;0 -->
 <g id="edge2" class="edge"><title>2&#45;&gt;0</title>
@@ -114,8 +114,8 @@
 <g id="node9" class="node"><title>8</title>
 <path fill="none" stroke="#97d856" stroke-width="2" d="M1667,-345C1667,-345 1056,-345 1056,-345 1050,-345 1044,-339 1044,-333 1044,-333 1044,-316 1044,-316 1044,-310 1050,-304 1056,-304 1056,-304 1667,-304 1667,-304 1673,-304 1679,-310 1679,-316 1679,-316 1679,-333 1679,-333 1679,-339 1673,-345 1667,-345"/>
 <text text-anchor="middle" x="1361.5" y="-333" font-family="sans" font-size="10.00">bowtie2_mapping</text>
-<text text-anchor="middle" x="1361.5" y="-322" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/seal_methyl&#45;cap_medip_pe/output</text>
-<text text-anchor="middle" x="1361.5" y="-311" font-family="sans" font-size="10.00">sample_id: SRR6946476</text>
+<!-- <text text-anchor="middle" x="1361.5" y="-322" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/seal_methyl&#45;cap_medip_pe/output</text>
+<text text-anchor="middle" x="1361.5" y="-311" font-family="sans" font-size="10.00">sample_id: SRR6946476</text> -->
 </g>
 <!-- 8&#45;&gt;7 -->
 <g id="edge12" class="edge"><title>8&#45;&gt;7</title>

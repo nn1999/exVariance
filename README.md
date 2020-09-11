@@ -31,6 +31,8 @@
   - [Help message](#help-message)
   - [Input files](#input-files)
   - [Run](#run)
+  - [Output and Summary](#output-and-summary)
+  - [Rule Graph](#rule-graph)
 - [System Requirements](#system-requirements)
 - [Copyright and License Information](#copyright-and-license-information)
 - [Citation](#citation)
@@ -230,6 +232,7 @@ Multiple datasets can be put in the same directory by replacing "example" with y
 ![exVariance analysis](docs/imgs/ExVariance_analysis.svg)
 
 #### For RNA-seq realted analysis
+
 ```bash
 exVariance -u <USER_CONFIG_FILE> RNA_seq_pre_process
 ```
@@ -268,6 +271,38 @@ exVariance -u <USER_CONFIG_FILE> DNA_seq_ctDNA_mutation
 
 exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 ```
+
+### Output and Summary
+
+#### For RNA-seq realted analysis
+![exVariance RNA-seq output](docs/imgs/ExVariance_RNA_seq_output_summary.svg)
+
+### Rule Graph
+
+#### For RNA-seq realted analysis
+##### pre prpcess
+![rulegraph_RNA_seq_pre_process_pe](docs/imgs/rulegraph_RNA_seq_pre_process_pe.svg)
+
+##### expression matrix
+![rulegraph_RNA_seq_exp_matrix_pe](docs/imgs/rulegraph_RNA_seq_exp_matrix_pe.svg)
+
+#### For DNA methylation realted analysis
+
+##### DNA_meth_WGBS,DNA_meth_RRBS
+![wgbs_rrbs_pe](docs/imgs/wgbs_rrbs_pe.svg)
+
+##### DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq
+![seal_methyl-cap_medip_pe](docs/imgs/seal_methyl-cap_medip_pe.svg)
+
+##### DNA_meth_MeDIP_seq,DNA_meth_MCTA_seq
+![mcta_pe](docs/imgs/mcta_pe.svg)
+
+#### For DNA-seq related analysis
+
+##### DNA-seq np
+![dna-seq_np_pe](docs/imgs/dna-seq_np_pe.svg)
+
+
 
 ## System Requirements:
 

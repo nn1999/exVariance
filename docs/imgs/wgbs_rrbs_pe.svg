@@ -18,9 +18,9 @@
 <g id="node2" class="node"><title>1</title>
 <path fill="none" stroke="#56d8c9" stroke-width="2" stroke-dasharray="5,2" d="M555,-196C555,-196 12,-196 12,-196 6,-196 0,-190 0,-184 0,-184 0,-156 0,-156 0,-150 6,-144 12,-144 12,-144 555,-144 555,-144 561,-144 567,-150 567,-156 567,-156 567,-184 567,-184 567,-190 561,-196 555,-196"/>
 <text text-anchor="middle" x="283.5" y="-184" font-family="sans" font-size="10.00">fastqc_pe</text>
-<text text-anchor="middle" x="283.5" y="-173" font-family="sans" font-size="10.00">mate_index: 1</text>
+<!-- <text text-anchor="middle" x="283.5" y="-173" font-family="sans" font-size="10.00">mate_index: 1</text>
 <text text-anchor="middle" x="283.5" y="-162" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/wgbs_rrbs_pe/output</text>
-<text text-anchor="middle" x="283.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR11615795</text>
+<text text-anchor="middle" x="283.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR11615795</text> -->
 </g>
 <!-- 1&#45;&gt;0 -->
 <g id="edge1" class="edge"><title>1&#45;&gt;0</title>
@@ -41,9 +41,9 @@
 <g id="node3" class="node"><title>2</title>
 <path fill="none" stroke="#56d8c9" stroke-width="2" stroke-dasharray="5,2" d="M1140,-196C1140,-196 597,-196 597,-196 591,-196 585,-190 585,-184 585,-184 585,-156 585,-156 585,-150 591,-144 597,-144 597,-144 1140,-144 1140,-144 1146,-144 1152,-150 1152,-156 1152,-156 1152,-184 1152,-184 1152,-190 1146,-196 1140,-196"/>
 <text text-anchor="middle" x="868.5" y="-184" font-family="sans" font-size="10.00">fastqc_pe</text>
-<text text-anchor="middle" x="868.5" y="-173" font-family="sans" font-size="10.00">mate_index: 2</text>
+<!-- <text text-anchor="middle" x="868.5" y="-173" font-family="sans" font-size="10.00">mate_index: 2</text>
 <text text-anchor="middle" x="868.5" y="-162" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/wgbs_rrbs_pe/output</text>
-<text text-anchor="middle" x="868.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR11615795</text>
+<text text-anchor="middle" x="868.5" y="-151" font-family="sans" font-size="10.00">sample_id: SRR11615795</text> -->
 </g>
 <!-- 2&#45;&gt;0 -->
 <g id="edge2" class="edge"><title>2&#45;&gt;0</title>
@@ -94,8 +94,8 @@
 <g id="node8" class="node"><title>7</title>
 <path fill="none" stroke="#d8a456" stroke-width="2" stroke-dasharray="5,2" d="M1522,-345C1522,-345 979,-345 979,-345 973,-345 967,-339 967,-333 967,-333 967,-316 967,-316 967,-310 973,-304 979,-304 979,-304 1522,-304 1522,-304 1528,-304 1534,-310 1534,-316 1534,-316 1534,-333 1534,-333 1534,-339 1528,-345 1522,-345"/>
 <text text-anchor="middle" x="1250.5" y="-333" font-family="sans" font-size="10.00">trim_galore_pe</text>
-<text text-anchor="middle" x="1250.5" y="-322" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/wgbs_rrbs_pe/output</text>
-<text text-anchor="middle" x="1250.5" y="-311" font-family="sans" font-size="10.00">sample_id: SRR11615795</text>
+<!-- <text text-anchor="middle" x="1250.5" y="-322" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/wgbs_rrbs_pe/output</text>
+<text text-anchor="middle" x="1250.5" y="-311" font-family="sans" font-size="10.00">sample_id: SRR11615795</text> -->
 </g>
 <!-- 7&#45;&gt;6 -->
 <g id="edge9" class="edge"><title>7&#45;&gt;6</title>

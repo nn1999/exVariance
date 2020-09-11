@@ -18,8 +18,8 @@
 <g id="node2" class="node"><title>1</title>
 <path fill="none" stroke="#70d856" stroke-width="2" stroke-dasharray="5,2" d="M530,-545C530,-545 12,-545 12,-545 6,-545 0,-539 0,-533 0,-533 0,-516 0,-516 0,-510 6,-504 12,-504 12,-504 530,-504 530,-504 536,-504 542,-510 542,-516 542,-516 542,-533 542,-533 542,-539 536,-545 530,-545"/>
 <text text-anchor="middle" x="271" y="-533" font-family="sans" font-size="10.00">trim_fastq</text>
-<text text-anchor="middle" x="271" y="-522" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/mcta_pe/output</text>
-<text text-anchor="middle" x="271" y="-511" font-family="sans" font-size="10.00">sample_id: SRR8800358</text>
+<!-- <text text-anchor="middle" x="271" y="-522" font-family="sans" font-size="10.00">output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/mcta_pe/output</text>
+<text text-anchor="middle" x="271" y="-511" font-family="sans" font-size="10.00">sample_id: SRR8800358</text> -->
 </g>
 <!-- 1&#45;&gt;0 -->
 <g id="edge1" class="edge"><title>1&#45;&gt;0</title>
