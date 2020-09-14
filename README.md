@@ -314,16 +314,27 @@ including filter, imputation, normalization, batch removing
 <div align="center"><img alt="dna-seq_np_pe" width="400" src="docs/imgs/rulegraph_DNA_seq_np_pe.svg"/></div>
 
 
+## Change Log
+### v1.0.0
+- Release exVariance
+
+### v1.0.1
+- Provide docker image for easy installation.
+
+### v1.0.2
+- Fix some bugs
+
+## Details
+
+1. For paire end analysis, the fastq files should end with _1.fastq.gz and _1.fastq.gz, and in the `sample_ids.txt` file, the suffix should not write in the file.
+2. You need to create the following 3 directories: summary, output and temp
+
 ## System Requirements:
-
 Some of the tools that exVariance uses, e.g. STAR is very memory intensive programs.  Therefore we recommend the following system requirements for exVariance:
-
 #### Minimal system requirements:
 We recommend that you run exVariance on a server that has at least 48GB of ram.  This will allow for a single-threaded exVariance run (on human samples).
-
 #### Recommended system requirements:
 We recommend that you have at least 64GB of ram and at least a 4-core CPU if you want to run exVariance in multi-threaded mode (which will speedup the workflow significantly).  
-
 Our own servers have 64GB of ram and 16 cores.
 
 ## Copyright and License Information

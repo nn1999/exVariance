@@ -36,7 +36,7 @@ rule all:
     
 rule fastqc_raw_pe:
     input:
-        auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_{mate_index}.fastq')
+        auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_{mate_index}.fastq.gz')
     output:
         html='{output_dir}/fastqc_raw/{sample_id}_{mate_index}_fastqc.html',
         zip='{output_dir}/fastqc_raw/{sample_id}_{mate_index}_fastqc.zip'
