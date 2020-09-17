@@ -1,0 +1,15 @@
+# default config
+default_config_file: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/TCR-seq/config/default_config.yaml
+
+# basicfigfile paths
+root_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software
+
+genome_dir: /lulab/lustre2/zhangshang/ref/hg38
+ctat_lib_dir: /lulab/lustre2/zhangshang/ref/CTAT_lib_yumin/ctat_genome_lib_build_dir
+
+data_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/TCR-seq/data
+output_dir: /lulab/lustre2/zhangshang/work/software/exvariance/exvariance_software/demo/TCR-seq/output
+
+# general parameters
+threads_compress: 1
+threads_mapping: 6

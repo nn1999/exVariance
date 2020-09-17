@@ -1,0 +1,79 @@
+include: '../common.snakemake'
+
+# output_dir = config.get("output_dir")
+
+rule all:
+    input:
+        expand('{output_dir}/deepCAT_out/{sample_id}/Cancer_score_filter_out.txt',output_dir=config.get('output_dir'), sample_id=sample_ids)
+
+rule TRUST4:
+    input:
+        bam_file=config.get('data_dir') + '/bam/{sample_id}.bam',
+        bcrtcr_ref=config.get('genome_dir') + '/TCR/bcrtcr.fa',
+        imgt_c_ref=config.get('genome_dir') + '/TCR/IMGT+C.fa',
+    output:
+        '{output_dir}/run_trust4_out/{sample_id}/{sample_id}_report.tsv'
+    log:
+        '{output_dir}/log/run_trust4_out/{sample_id}.log'
+    params:
+        output='{output_dir}/run_trust4_out/{sample_id}/{sample_id}',
+        run_trust4=config.get('bin_dir') + 'run_trust4'
+    shell:
+        ''' {params.run_trust4} -b {input.bam_file} -f {input.bcrtcr_ref} --ref {input.imgt_c_ref} -o {output} > {log} 2>&1
+        
+        '''
+
+rule filter:
+    input:
+        '{output_dir}/run_trust4_out/{sample_id}/{sample_id}_report.tsv'
+    output:
+        '{output_dir}/filter/{sample_id}/{sample_id}_report_filter.tsv'
+    log:
+        '{output_dir}/log/filter/{sample_id}.log'
+    params:
+        input_dir='{output_dir}/run_trust4_out',
+        output_dir='{output_dir}/filter',
+        sample='{sample_id}',
+        r_script='{bin_dir}/trust4_filter.R',
+    shell:
+        ''' Rscript {params.r_script} {params.input_dir} {params.output_dir} {params.sample}
+        '''
+
+
+rule iSMART_cluster:
+    input:
+        '{output_dir}/filter/{sample_id}/{sample_id}_report_filter.tsv'
+    output:
+        '{output_dir}/cluster_out/{sample_id}_report_filter.tsv_ClusteredCDR3s_7.5.txt'
+    params:
+        iSMART='{bin_dir}/iSMARTv3.py',
+        output_dir='{output_dir}/cluster_out/'
+    log:
+        '{output_dir}/log/iSMART_cluster/{sample_id}.log'
+    conda:
+        '../envs/python2.7.yaml'
+    shell:
+        ''' python {params.iSMART} -f {input} -o {params.output_dir} > {log} 2>&1
+        '''
+
+## 这一步需要分组比较，我这里没有写分组信息，只是做了一个全部的DeepCAT
+rule DeepCAT:
+    input:
+        '{output_dir}/cluster_out/{sample_id}_report_filter.tsv_ClusteredCDR3s_7.5.txt'
+    output:
+        '{output_dir}/deepCAT_out/{sample_id}/Cancer_score_filter_out.txt'
+    log:
+        '{output_dir}/log/deep_cat/{sample_id}.log'
+    params:
+        deep_cat_dir='{bin_dir}/DeepCAT',
+        deep_cat_bash='{bin_dir}/DeepCAT/Script_DeepCAT.sh',
+        cluster_out_dir='{output_dir}/cluster_out/',
+        deep_cat_out_dir='{output_dir}/deepCAT_out/'
+    conda:
+        '../envs/deepCAT.yaml'
+    shell:
+        ''' cd {params.deep_cat_dir} ; \
+            bash {params.deep_cat_bash} -t {params.cluster_out_dir} > {log} 2> &1 ; \
+            mv ./Cancer_score_*.txt {params.deep_cat_out_dir} ; \ 
+            cd - ; \
+        '''
