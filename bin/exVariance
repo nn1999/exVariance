@@ -52,7 +52,7 @@ if __name__ == '__main__':
     ##---------------------------------------------------------------------------------##
 
     # set args
-    parser = argparse.ArgumentParser(description='exVariance is a tool for integrated analysis the liquid biopsy sequencing data.',
+    parser = argparse.ArgumentParser(description='exVariance is a tool for integrated analysis of the liquid biopsy sequencing data.',
                                      epilog='For additional help or support, please visit https://github.com/ShangZhang/exVariance')
     parser.add_argument('step', type=str, choices=steps)
     parser.add_argument('--user_config_file', '-u', type=str, required=True,

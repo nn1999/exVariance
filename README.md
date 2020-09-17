@@ -1,6 +1,6 @@
 # exVariance
 
-**A tool for integrated analysis the liquid biopsy sequencing data**
+**A tool for integrated analysis of the liquid biopsy sequencing data**
 
 <!-- **Tutorial:** [https://shangzhang.github.io/exVariance/](https://shangzhang.github.io/exVariance/) -->
 
@@ -136,7 +136,7 @@ usage: exVariance [-h] --user_config_file USER_CONFIG_FILE
                     DNA_meth_MeDIP_seq,DNA_meth_MCTA_seq
                     }
 
-exVariance is a tool for integrated analysis the liquid biopsy sequencing data.
+exVariance is a tool for integrated analysis of the liquid biopsy sequencing data.
 
 positional arguments:
   { RNA_seq_pre_process,RNA_seq_exp_matrix,
