@@ -280,7 +280,7 @@ exVariance -u <USER_CONFIG_FILE> DNA_seq_NP
 ### Rule Graph
 
 #### For RNA-seq realted analysis
-##### pre prpcess
+##### pre process
 <div align="center"><img alt="rulegraph_RNA_seq_pre_process_pe" width="300" src="docs/imgs/rulegraph_RNA_seq_pre_process_pe.svg"/></div>
 
 ##### expression matrix
@@ -298,12 +298,12 @@ including filter, imputation, normalization, batch removing
 <!-- <div align="center"><img alt="rulegraph_RNA_seq_RNA_editing" width="150" src="docs/imgs/rulegraph_RNA_seq_RNA_editing.svg"/></div> -->
 
 ##### TCR analysis
-<div align="center"><img alt="rulegraph_RNA_seq_SNP" width="200" src="docs/imgs/rulegraph_RNA_seq_TCR-seq.svg"/></div>
+<div align="center"><img alt="rulegraph_RNA_seq_SNP" width="100" src="docs/imgs/rulegraph_RNA_seq_TCR-seq.svg"/></div>
 
 #### For DNA methylation realted analysis
 
 ##### DNA_meth_WGBS,DNA_meth_RRBS
-<div align="center"><img alt="wgbs_rrbs_pe" width="500" src="docs/imgs/rulegraph_DNA_meth_wgbs_rrbs_pe.svg"/></div>
+<div align="center"><img alt="wgbs_rrbs_pe" width="400" src="docs/imgs/rulegraph_DNA_meth_wgbs_rrbs_pe.svg"/></div>
 
 ##### DNA_meth_Seal_seq,DNA_meth_Methyl-cap_seq,DNA_meth_MeDIP_seq
 <div align="center"><img alt="seal_methyl-cap_medip_pe" width="400" src="docs/imgs/rulegraph_DNA_meth_seal_methyl-cap_medip_pe.svg"/></div>
@@ -322,15 +322,12 @@ including filter, imputation, normalization, batch removing
 - Release exVariance
 
 ### v1.0.1
-- Provide docker image for easy installation.
-
-### v1.0.2
 - Fix some bugs
 
 ## Details
 
-1. For paire end analysis, the fastq files should end with _1.fastq.gz and _1.fastq.gz, and in the `sample_ids.txt` file, the suffix should not write in the file.
-2. You need to create the following 3 directories: summary, output and temp
+1. For paire end analysis, the fastq files should end with `_1.fastq.gz` and `_2.fastq.gz`, and in the `sample_ids.txt` file, the suffix should not write in the file.
+2. You need to create the following 3 directories: `summary`, `output` and `temp`.
 
 ## System Requirements:
 Some of the tools that exVariance uses, e.g. STAR is very memory intensive programs.  Therefore we recommend the following system requirements for exVariance:
