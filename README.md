@@ -83,14 +83,23 @@ Install the [github](https://github.com/ShangZhang/exVariance) source code and e
     mamba install -c r -c conda-forge -c bioconda -c eugene_t r-argparse r-clustersim r-ggpubr bioconductor-scater bioconductor-scran bioconductor-singlecellexperiment bioconductor-sva bioconductor-edger bioconductor-ruvseq r-kbet r-devtools -y
     ```
     ```r
-    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"))
+    ## continue to install other tools in R
+    conda activate exvariance4
+    R
+    > library(usethis)
+    > library(devtools)
+    > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"),host="https://api.github.com")
     ```
     **OR**
     ```R
-    install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
-    BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
-    devtools::install_github(c("hemberg-lab/scRNA.seq.funcs"))
-    devtools::install_github(c("theislab/kBET"))
+    conda activate exvariance4
+    R
+    > library(usethis)
+    > library(devtools)
+    > install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
+    > BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
+    > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs"),host="https://api.github.com")
+    > devtools::install_github(c("theislab/kBET"),host="https://api.github.com")
     ```
     
 ### Docker image
