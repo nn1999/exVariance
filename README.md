@@ -88,7 +88,7 @@ Install the [github](https://github.com/ShangZhang/exVariance) source code and e
     R
     > library(usethis)
     > library(devtools)
-    > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"))
+    > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"),host="https://api.github.com")
     ```
     **OR**
     ```R
@@ -98,8 +98,8 @@ Install the [github](https://github.com/ShangZhang/exVariance) source code and e
     > library(devtools)
     > install.packages(c("argparse","clusterSim","ggpubr","BiocManager","devtools"))
     > BiocManager::install(c("scater","scran","SingleCellExperiment","sva","edgeR","RUVSeq"))
-    > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs"))
-    > devtools::install_github(c("theislab/kBET"))
+    > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs"),host="https://api.github.com")
+    > devtools::install_github(c("theislab/kBET"),host="https://api.github.com")
     ```
     
 ### Docker image
