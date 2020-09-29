@@ -27,7 +27,7 @@ rule fastqc_pe:
     wildcard_constraints:
         mate_index='[12]'
     conda:
-        "envs/quality_control.yaml"
+        "../envs/quality_control.yaml"
     threads:
         1
     log:
@@ -49,7 +49,7 @@ rule multiqc_pe:
     wildcard_constraints:
         mate_index='[12]'
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     threads:
         1
     log:
@@ -60,14 +60,14 @@ rule multiqc_pe:
 
 rule bowtie2_mapping:
     input:
-        fastq1=config.get('data_dir') + '/fastq/{sample_id}_1.fastq',
-        fastq2=config.get('data_dir') + '/fastq/{sample_id}_2.fastq'
+        fastq1=auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_1.fastq'),
+        fastq2=auto_gzip_input(config.get('data_dir') + '/fastq/{sample_id}_2.fastq')
     output:
         sam_file='{output_dir}/bowtie2_mapping/{sample_id}.sam'
     params:
         bowtie2_index=config.get('genome_dir') + '/genome_index/bowtie2/genome',
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     threads:
         config.get('threads_mapping')
     log:
@@ -83,7 +83,7 @@ rule sam_to_bam:
     output:
         bam_file='{output_dir}/bowtie2_mapping/{sample_id}.bam'
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     threads:
         config.get('threads_mapping')
     log:
@@ -102,7 +102,7 @@ rule remove_duplicates:
     threads:
         1
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     log:
         '{output_dir}/log/dedup_bam/{sample_id}_dedup.log'
     shell:
@@ -120,7 +120,7 @@ rule index_dudup_bam:
     threads:
         config.get('threads_mapping')
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     log:
         '{output_dir}/log/index_dudup_bam/{sample_id}.log'
     shell:
@@ -137,7 +137,7 @@ rule bam_to_bw:
     threads:
         config.get('threads_compress')
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     log:
         '{output_dir}/log/dedup_bw/{sample_id}.log'
     shell:
@@ -155,7 +155,7 @@ rule macs2_callPeak:
     threads:
         1
     conda:
-        'envs/seal_methyl-cap_medip.yaml'
+        '../envs/seal_methyl-cap_medip.yaml'
     log:
         '{output_dir}/log/macs2_callPeak/{sample_id}.log'
     shell:
