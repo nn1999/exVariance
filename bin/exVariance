@@ -96,7 +96,7 @@ if __name__ == '__main__':
     elif args.step == 'RNA_seq_exp_matrix':
         if config['paired_end']:
             snakefile = os.path.join(
-                root_dir, 'snakemake/RNA_seq', 'exp_matrix.snakemake')
+                root_dir, 'snakemake/RNA_seq', 'exp_matrix_pe.snakemake')
     elif args.step == 'RNA_seq_fusion_transcripts':
         if config['paired_end']:
             snakefile = os.path.join(
