@@ -149,7 +149,7 @@ rule macs2_callPeak:
     input:
         dedup_bam_file='{output_dir}/dedup_bam/{sample_id}_dedup.bam'
     output:
-        macs2_out_dir='{output_dir}/macs2_callPeak/{sample_id}/'
+        macs2_out_dir='{output_dir}/macs2_callPeak/{sample_id}/{sample_id}_summits.bed'
     params:
         sample_name='{sample_id}'
     threads:
