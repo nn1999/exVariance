@@ -152,7 +152,7 @@ if __name__ == '__main__':
                 root_dir, 'snakemake/DNA_methylation', 'mcta_pe.snakemake')
 
     # logging snakemake command
-    snakemake_args = ['-p', '-k', '--use-conda', '-j', '1', '--rerun-incomplete',
+    snakemake_args = ['-p', '-k', '--use-conda', '-j', '16', '--rerun-incomplete',
                       '--latency-wait', '10', '--snakefile', snakefile, '--configfile', user_config_file]
     logger.debug('snakemake command: ' + str(snakemake_path) +
                  ' ' + str(snakemake_args))
