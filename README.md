@@ -80,12 +80,13 @@ Install the [github](https://github.com/ShangZhang/exVariance) source code and e
 4. Install related **R packages**
     **Best Practice**
     ```r
+    conda activate exvariance4
+    R
     mamba install -c r -c conda-forge -c bioconda -c eugene_t r-argparse r-clustersim r-ggpubr bioconductor-scater bioconductor-scran bioconductor-singlecellexperiment bioconductor-sva bioconductor-edger bioconductor-ruvseq r-kbet r-devtools -y
     ```
     ```r
     ## continue to install other tools in R
-    conda activate exvariance4
-    R
+    
     > library(usethis)
     > library(devtools)
     > devtools::install_github(c("hemberg-lab/scRNA.seq.funcs","theislab/kBET"),host="https://api.github.com")
